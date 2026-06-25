@@ -45,7 +45,7 @@ import { Badge } from "@/components/ui/badge";
 const workspaceItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Assignments", url: "/dashboard/assignments", icon: ClipboardList },
-  { title: "Create Assignment", url: "/dashboard/assignments/new", icon: PlusSquare },
+  { title: "Create Assignment", url: "/assignments/new", icon: PlusSquare },
   { title: "Assignment History", url: "/dashboard/assignments/history", icon: History },
   { title: "Templates", url: "/dashboard/templates", icon: LayoutTemplate },
 ];
@@ -119,8 +119,13 @@ function NavGroup({
             return (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton asChild isActive={active} tooltip={item.title}>
-                  {/* Only the real dashboard route is wired; others are stubs */}
-                  <a href={item.url === "/dashboard" ? "/dashboard" : "#"}>
+                  <a
+                    href={
+                      item.url === "/dashboard" || item.url === "/assignments/new"
+                        ? item.url
+                        : "#"
+                    }
+                  >
                     <item.icon className="h-4 w-4" />
                     <span>{item.title}</span>
                     {item.badge && (
