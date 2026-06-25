@@ -84,7 +84,7 @@ function EmailLogin() {
   const onSubmit = async () => {
     await new Promise((r) => setTimeout(r, 600));
     toast.success("Logged in", { description: "Welcome back to Task Align." });
-    navigate({ to: "/" });
+    navigate({ to: "/dashboard" });
   };
 
   return (
@@ -155,7 +155,7 @@ function MobileLogin() {
     await new Promise((r) => setTimeout(r, 600));
     setVerifying(false);
     toast.success("Verified", { description: "You're logged in." });
-    navigate({ to: "/" });
+    navigate({ to: "/dashboard" });
   };
 
   if (step === "mobile") {
