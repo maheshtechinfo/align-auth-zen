@@ -135,14 +135,6 @@ const ASSIGNMENT_TYPES: AssignmentType[] = [
   },
 ];
 
-// 5-step model. Step 0 = type selection (auto-completed once chosen).
-const STEPS = [
-  { id: 0, label: "Select Assignment Type" },
-  { id: 1, label: "Basic Information" },
-  { id: 2, label: "Resources & Tasks" },
-  { id: 3, label: "Matrix Entry" },
-  { id: 4, label: "Review & Generate" },
-];
 
 // 6-step model. Step 0 = type selection (auto-completed once chosen).
 const STEPS = [
