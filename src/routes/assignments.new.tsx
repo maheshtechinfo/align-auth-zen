@@ -395,26 +395,45 @@ function CreateAssignmentPage() {
                     onNext={handleNext}
                   />
                 )}
-                {step >= 3 && (
-                  <Card className="rounded-2xl border-border bg-card shadow-soft">
-                    <CardContent className="flex h-64 flex-col items-center justify-center gap-3 p-8 text-center">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                        <Sparkles className="h-6 w-6" />
-                      </div>
-                      <p className="text-base font-semibold">
-                        {STEPS[step]?.label} — coming next
-                      </p>
-                      <p className="max-w-md text-sm text-muted-foreground">
-                        This step will be built in the next iteration.
-                      </p>
-                      <div className="mt-2 flex gap-2">
-                        <Button variant="outline" onClick={handleBack} className="rounded-xl">
-                          <ArrowLeft className="mr-1.5 h-4 w-4" /> Back
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
+                {step === 3 && (
+                  <MatrixEntryStep
+                    type={selected}
+                    form={form}
+                    resources={resources}
+                    tasks={tasks}
+                    matrix={matrix}
+                    setMatrix={setMatrix}
+                    matrixComplete={matrixComplete}
+                    onBack={handleBack}
+                    onNext={handleNext}
+                  />
                 )}
+                {step === 4 && (
+                  <ReviewStep
+                    type={selected}
+                    form={form}
+                    resources={resources}
+                    tasks={tasks}
+                    matrix={matrix}
+                    onBack={handleBack}
+                    onGenerate={() => {
+                      runOptimization();
+                      setStep(5);
+                    }}
+                  />
+                )}
+                {step === 5 && (
+                  <ResultStage
+                    type={selected}
+                    form={form}
+                    resources={resources}
+                    tasks={tasks}
+                    result={result}
+                    onBack={() => setStep(4)}
+                    onCreateAnother={reset}
+                  />
+                )}
+
               </div>
             )}
           </div>
