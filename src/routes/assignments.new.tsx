@@ -144,6 +144,16 @@ const STEPS = [
   { id: 4, label: "Review & Generate" },
 ];
 
+// 6-step model. Step 0 = type selection (auto-completed once chosen).
+const STEPS = [
+  { id: 0, label: "Assignment Type" },
+  { id: 1, label: "Basic Information" },
+  { id: 2, label: "Resources & Tasks" },
+  { id: 3, label: "Matrix Entry" },
+  { id: 4, label: "Review" },
+  { id: 5, label: "Result" },
+];
+
 type BasicForm = {
   name: string;
   description: string;
@@ -152,9 +162,92 @@ type BasicForm = {
 
 type NamedItem = { id: string; name: string };
 
+type AssignmentResult = {
+  pairs: { resource: string; task: string; value: number }[];
+  total: number;
+  manual: number;
+  savings: number;
+  improvement: number;
+  executionMs: number;
+};
+
 function uid() {
   return Math.random().toString(36).slice(2, 10);
 }
+
+// Brute-force Hungarian for small N (n!), greedy fallback above 8.
+function solveAssignment(
+  matrix: number[][],
+  rowNames: string[],
+  colNames: string[],
+  mode: "cost" | "profit",
+): { pairs: { resource: string; task: string; value: number }[]; total: number } {
+  const n = matrix.length;
+  if (n === 0) return { pairs: [], total: 0 };
+  const m = matrix[0].length;
+  const size = Math.min(n, m);
+
+  if (n <= 8 && m <= 8) {
+    const cols = Array.from({ length: m }, (_, i) => i);
+    let best: number[] | null = null;
+    let bestScore = mode === "cost" ? Infinity : -Infinity;
+    const permute = (arr: number[], k: number) => {
+      if (k === size) {
+        let s = 0;
+        for (let i = 0; i < size; i++) s += matrix[i][arr[i]] ?? 0;
+        if (mode === "cost" ? s < bestScore : s > bestScore) {
+          bestScore = s;
+          best = arr.slice(0, size);
+        }
+        return;
+      }
+      for (let i = k; i < arr.length; i++) {
+        [arr[k], arr[i]] = [arr[i], arr[k]];
+        permute(arr, k + 1);
+        [arr[k], arr[i]] = [arr[i], arr[k]];
+      }
+    };
+    permute(cols, 0);
+    const pairs = (best ?? []).map((c, r) => ({
+      resource: rowNames[r],
+      task: colNames[c],
+      value: matrix[r][c],
+    }));
+    return { pairs, total: bestScore === Infinity || bestScore === -Infinity ? 0 : bestScore };
+  }
+
+  // Greedy fallback
+  const used = new Set<number>();
+  const pairs: { resource: string; task: string; value: number }[] = [];
+  let total = 0;
+  for (let r = 0; r < size; r++) {
+    let bestC = -1;
+    let bestV = mode === "cost" ? Infinity : -Infinity;
+    for (let c = 0; c < m; c++) {
+      if (used.has(c)) continue;
+      const v = matrix[r][c] ?? 0;
+      if (mode === "cost" ? v < bestV : v > bestV) {
+        bestV = v;
+        bestC = c;
+      }
+    }
+    if (bestC >= 0) {
+      used.add(bestC);
+      pairs.push({ resource: rowNames[r], task: colNames[bestC], value: matrix[r][bestC] });
+      total += matrix[r][bestC];
+    }
+  }
+  return { pairs, total };
+}
+
+function diagonalTotal(matrix: number[][]): number {
+  let s = 0;
+  const n = Math.min(matrix.length, matrix[0]?.length ?? 0);
+  for (let i = 0; i < n; i++) s += matrix[i][i] ?? 0;
+  return s;
+}
+
+
 
 function CreateAssignmentPage() {
   const [selected, setSelected] = useState<AssignmentType | null>(null);
