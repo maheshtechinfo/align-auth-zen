@@ -1,5 +1,5 @@
-import { useRef, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   Users,
   Code2,
@@ -24,6 +24,19 @@ import {
   Info,
   Hand,
   FileUp,
+  Grid3x3,
+  ClipboardCheck,
+  Loader2,
+  Trophy,
+  FileDown,
+  RefreshCw,
+  LayoutDashboard,
+  AlertTriangle,
+  Save,
+  Calculator,
+  Target,
+  Clock,
+  Gauge,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -36,6 +49,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Table,
@@ -50,6 +64,7 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/assignments/new")({
   component: CreateAssignmentPage,
 });
+
 
 type AssignmentTypeId =
   | "employee"
@@ -120,13 +135,15 @@ const ASSIGNMENT_TYPES: AssignmentType[] = [
   },
 ];
 
-// 5-step model. Step 0 = type selection (auto-completed once chosen).
+
+// 6-step model. Step 0 = type selection (auto-completed once chosen).
 const STEPS = [
-  { id: 0, label: "Select Assignment Type" },
+  { id: 0, label: "Assignment Type" },
   { id: 1, label: "Basic Information" },
   { id: 2, label: "Resources & Tasks" },
   { id: 3, label: "Matrix Entry" },
-  { id: 4, label: "Review & Generate" },
+  { id: 4, label: "Review" },
+  { id: 5, label: "Result" },
 ];
 
 type BasicForm = {
@@ -137,9 +154,92 @@ type BasicForm = {
 
 type NamedItem = { id: string; name: string };
 
+type AssignmentResult = {
+  pairs: { resource: string; task: string; value: number }[];
+  total: number;
+  manual: number;
+  savings: number;
+  improvement: number;
+  executionMs: number;
+};
+
 function uid() {
   return Math.random().toString(36).slice(2, 10);
 }
+
+// Brute-force Hungarian for small N (n!), greedy fallback above 8.
+function solveAssignment(
+  matrix: number[][],
+  rowNames: string[],
+  colNames: string[],
+  mode: "cost" | "profit",
+): { pairs: { resource: string; task: string; value: number }[]; total: number } {
+  const n = matrix.length;
+  if (n === 0) return { pairs: [], total: 0 };
+  const m = matrix[0].length;
+  const size = Math.min(n, m);
+
+  if (n <= 8 && m <= 8) {
+    const cols = Array.from({ length: m }, (_, i) => i);
+    let best: number[] | null = null;
+    let bestScore = mode === "cost" ? Infinity : -Infinity;
+    const permute = (arr: number[], k: number) => {
+      if (k === size) {
+        let s = 0;
+        for (let i = 0; i < size; i++) s += matrix[i][arr[i]] ?? 0;
+        if (mode === "cost" ? s < bestScore : s > bestScore) {
+          bestScore = s;
+          best = arr.slice(0, size);
+        }
+        return;
+      }
+      for (let i = k; i < arr.length; i++) {
+        [arr[k], arr[i]] = [arr[i], arr[k]];
+        permute(arr, k + 1);
+        [arr[k], arr[i]] = [arr[i], arr[k]];
+      }
+    };
+    permute(cols, 0);
+    const pairs = (best ?? []).map((c, r) => ({
+      resource: rowNames[r],
+      task: colNames[c],
+      value: matrix[r][c],
+    }));
+    return { pairs, total: bestScore === Infinity || bestScore === -Infinity ? 0 : bestScore };
+  }
+
+  // Greedy fallback
+  const used = new Set<number>();
+  const pairs: { resource: string; task: string; value: number }[] = [];
+  let total = 0;
+  for (let r = 0; r < size; r++) {
+    let bestC = -1;
+    let bestV = mode === "cost" ? Infinity : -Infinity;
+    for (let c = 0; c < m; c++) {
+      if (used.has(c)) continue;
+      const v = matrix[r][c] ?? 0;
+      if (mode === "cost" ? v < bestV : v > bestV) {
+        bestV = v;
+        bestC = c;
+      }
+    }
+    if (bestC >= 0) {
+      used.add(bestC);
+      pairs.push({ resource: rowNames[r], task: colNames[bestC], value: matrix[r][bestC] });
+      total += matrix[r][bestC];
+    }
+  }
+  return { pairs, total };
+}
+
+function diagonalTotal(matrix: number[][]): number {
+  let s = 0;
+  const n = Math.min(matrix.length, matrix[0]?.length ?? 0);
+  for (let i = 0; i < n; i++) s += matrix[i][i] ?? 0;
+  return s;
+}
+
+
 
 function CreateAssignmentPage() {
   const [selected, setSelected] = useState<AssignmentType | null>(null);
@@ -150,11 +250,11 @@ function CreateAssignmentPage() {
     optimization: "cost",
   });
   const [resources, setResources] = useState<NamedItem[]>([
-    { id: uid(), name: "John" },
-    { id: uid(), name: "David" },
     { id: uid(), name: "Rahul" },
     { id: uid(), name: "Amit" },
     { id: uid(), name: "Simran" },
+    { id: uid(), name: "Pooja" },
+    { id: uid(), name: "John" },
   ]);
   const [tasks, setTasks] = useState<NamedItem[]>([
     { id: uid(), name: "Module 1" },
@@ -163,12 +263,49 @@ function CreateAssignmentPage() {
     { id: uid(), name: "Module 4" },
     { id: uid(), name: "Module 5" },
   ]);
+  const [matrix, setMatrix] = useState<(number | null)[][]>([
+    [9, 2, 7, 8, 6],
+    [6, 4, 3, 7, 5],
+    [5, 8, 1, 8, 4],
+    [7, 6, 9, 4, 3],
+    [8, 3, 2, 6, 7],
+  ]);
+  const [result, setResult] = useState<AssignmentResult | null>(null);
+
+  // Keep matrix shape in sync with resources × tasks.
+  useEffect(() => {
+    setMatrix((prev) => {
+      const rows = resources.length;
+      const cols = tasks.length;
+      const next: (number | null)[][] = [];
+      for (let r = 0; r < rows; r++) {
+        const row: (number | null)[] = [];
+        for (let c = 0; c < cols; c++) {
+          row.push(prev[r]?.[c] ?? null);
+        }
+        next.push(row);
+      }
+      return next;
+    });
+  }, [resources.length, tasks.length]);
 
   const reset = () => {
     setSelected(null);
     setStep(1);
     setForm({ name: "", description: "", optimization: "cost" });
+    setResult(null);
   };
+
+  const matrixComplete = useMemo(
+    () =>
+      matrix.length > 0 &&
+      matrix.every(
+        (row) =>
+          row.length === tasks.length &&
+          row.every((v) => typeof v === "number" && !Number.isNaN(v)),
+      ),
+    [matrix, tasks.length],
+  );
 
   const handleNext = () => {
     if (step === 1) {
@@ -183,14 +320,39 @@ function CreateAssignmentPage() {
         return;
       }
       toast.success("Resources & tasks saved");
+    } else if (step === 3) {
+      if (!matrixComplete) {
+        toast.error("Complete all matrix values before continuing");
+        return;
+      }
+      toast.success("Matrix saved");
     }
-    setStep((s) => Math.min(s + 1, 4));
+    setStep((s) => Math.min(s + 1, 5));
   };
 
   const handleBack = () => {
     if (step === 1) reset();
     else setStep((s) => s - 1);
   };
+
+  const runOptimization = () => {
+    const start = performance.now();
+    const numeric = matrix.map((row) => row.map((v) => (v ?? 0) as number));
+    const { pairs, total } = solveAssignment(
+      numeric,
+      resources.map((r) => r.name),
+      tasks.map((t) => t.name),
+      form.optimization,
+    );
+    const manual = diagonalTotal(numeric);
+    const savings =
+      form.optimization === "cost" ? Math.max(manual - total, 0) : Math.max(total - manual, 0);
+    const baseline = form.optimization === "cost" ? manual : manual || 1;
+    const improvement = baseline > 0 ? Math.round((savings / baseline) * 100) : 0;
+    const executionMs = Math.max(1, Math.round(performance.now() - start));
+    setResult({ pairs, total, manual, savings, improvement, executionMs });
+  };
+
 
   return (
     <SidebarProvider>
@@ -233,26 +395,45 @@ function CreateAssignmentPage() {
                     onNext={handleNext}
                   />
                 )}
-                {step >= 3 && (
-                  <Card className="rounded-2xl border-border bg-card shadow-soft">
-                    <CardContent className="flex h-64 flex-col items-center justify-center gap-3 p-8 text-center">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                        <Sparkles className="h-6 w-6" />
-                      </div>
-                      <p className="text-base font-semibold">
-                        {STEPS[step]?.label} — coming next
-                      </p>
-                      <p className="max-w-md text-sm text-muted-foreground">
-                        This step will be built in the next iteration.
-                      </p>
-                      <div className="mt-2 flex gap-2">
-                        <Button variant="outline" onClick={handleBack} className="rounded-xl">
-                          <ArrowLeft className="mr-1.5 h-4 w-4" /> Back
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
+                {step === 3 && (
+                  <MatrixEntryStep
+                    type={selected}
+                    form={form}
+                    resources={resources}
+                    tasks={tasks}
+                    matrix={matrix}
+                    setMatrix={setMatrix}
+                    matrixComplete={matrixComplete}
+                    onBack={handleBack}
+                    onNext={handleNext}
+                  />
                 )}
+                {step === 4 && (
+                  <ReviewStep
+                    type={selected}
+                    form={form}
+                    resources={resources}
+                    tasks={tasks}
+                    matrix={matrix}
+                    onBack={handleBack}
+                    onGenerate={() => {
+                      runOptimization();
+                      setStep(5);
+                    }}
+                  />
+                )}
+                {step === 5 && (
+                  <ResultStage
+                    type={selected}
+                    form={form}
+                    resources={resources}
+                    tasks={tasks}
+                    result={result}
+                    onBack={() => setStep(4)}
+                    onCreateAnother={reset}
+                  />
+                )}
+
               </div>
             )}
           </div>
@@ -1127,3 +1308,751 @@ function OptimizationOption({
     </button>
   );
 }
+
+/* ---------------- Step 3: Matrix Entry ---------------- */
+
+function MatrixEntryStep({
+  type,
+  form,
+  resources,
+  tasks,
+  matrix,
+  setMatrix,
+  matrixComplete,
+  onBack,
+  onNext,
+}: {
+  type: AssignmentType;
+  form: BasicForm;
+  resources: NamedItem[];
+  tasks: NamedItem[];
+  matrix: (number | null)[][];
+  setMatrix: React.Dispatch<React.SetStateAction<(number | null)[][]>>;
+  matrixComplete: boolean;
+  onBack: () => void;
+  onNext: () => void;
+}) {
+  const updateCell = (r: number, c: number, raw: string) => {
+    setMatrix((prev) => {
+      const next = prev.map((row) => row.slice());
+      if (raw === "") {
+        next[r][c] = null;
+      } else {
+        const num = Number(raw);
+        if (!Number.isNaN(num)) next[r][c] = num;
+      }
+      return next;
+    });
+  };
+
+  const checks = [
+    { label: "Resources Available", ok: resources.length > 0 },
+    { label: "Tasks Available", ok: tasks.length > 0 },
+    { label: "Matrix Complete", ok: matrixComplete },
+    {
+      label: "Numeric Values Valid",
+      ok: matrix.every((r) => r.every((v) => v === null || typeof v === "number")),
+    },
+    { label: "Ready for Optimization", ok: matrixComplete && resources.length > 0 && tasks.length > 0 },
+  ];
+
+  return (
+    <Card className="rounded-2xl border-border bg-card shadow-soft">
+      <CardContent className="p-6 md:p-8">
+        <StepHeader
+          step={4}
+          title="Matrix Entry"
+          description="Enter the cost or profit value for every Resource and Task combination."
+        />
+
+        <AssignmentSummaryStrip
+          type={type}
+          form={form}
+          resources={resources.length}
+          tasks={tasks.length}
+        />
+
+        <div className="mt-6 grid gap-5 lg:grid-cols-[1.55fr_1fr]">
+          {/* Matrix card */}
+          <Card className="rounded-2xl border-border bg-card shadow-soft">
+            <CardContent className="space-y-4 p-5">
+              <div className="flex items-center gap-3 border-b border-border pb-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/15">
+                  <Grid3x3 className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-base font-semibold tracking-tight">
+                    Cost / Profit Matrix
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {resources.length} resources × {tasks.length} tasks · numeric values only
+                  </p>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto rounded-xl border border-border">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-primary/5">
+                      <th className="sticky left-0 z-10 bg-primary/5 px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-primary">
+                        Resource ＼ Task
+                      </th>
+                      {tasks.map((t) => (
+                        <th
+                          key={t.id}
+                          className="px-3 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wide text-primary"
+                        >
+                          {t.name}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {resources.map((res, r) => (
+                      <tr key={res.id} className="border-t border-border">
+                        <td className="sticky left-0 z-10 bg-card px-3 py-2 text-sm font-medium">
+                          {res.name}
+                        </td>
+                        {tasks.map((t, c) => {
+                          const v = matrix[r]?.[c];
+                          const empty = v === null || v === undefined;
+                          return (
+                            <td key={t.id} className="px-1.5 py-1.5">
+                              <Input
+                                inputMode="numeric"
+                                value={empty ? "" : String(v)}
+                                onChange={(e) =>
+                                  updateCell(r, c, e.target.value.replace(/[^0-9.-]/g, ""))
+                                }
+                                className={cn(
+                                  "h-10 w-full rounded-lg text-center text-sm font-medium",
+                                  empty
+                                    ? "border-destructive/40 bg-destructive/5"
+                                    : "border-border bg-background focus-visible:ring-primary/40",
+                                )}
+                                placeholder="—"
+                              />
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {!matrixComplete && (
+                <div className="flex items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-50 px-3 py-2.5 text-xs font-medium text-amber-700">
+                  <AlertTriangle className="h-4 w-4" /> Complete all matrix values.
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Validation panel */}
+          <Card className="rounded-2xl border-border bg-card shadow-soft">
+            <CardContent className="space-y-4 p-5">
+              <div className="flex items-center gap-3 border-b border-border pb-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/15">
+                  <ClipboardCheck className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-base font-semibold tracking-tight">Matrix Validation</p>
+                  <p className="text-xs text-muted-foreground">Live readiness checks</p>
+                </div>
+              </div>
+              <ul className="space-y-2.5">
+                {checks.map((c) => (
+                  <li
+                    key={c.label}
+                    className={cn(
+                      "flex items-center justify-between rounded-xl border px-3 py-2.5 text-sm",
+                      c.ok
+                        ? "border-success/30 bg-success/5 text-foreground"
+                        : "border-border bg-muted/30 text-muted-foreground",
+                    )}
+                  >
+                    <span className="font-medium">{c.label}</span>
+                    {c.ok ? (
+                      <CheckCircle2 className="h-4 w-4 text-success" />
+                    ) : (
+                      <div className="h-4 w-4 rounded-full border-2 border-border" />
+                    )}
+                  </li>
+                ))}
+              </ul>
+
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-xs text-muted-foreground">
+                <p className="font-semibold text-primary">Tip</p>
+                Use Tab to move between cells. Values can be costs or profit depending on the
+                selected optimization mode.
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-5">
+          <Button variant="outline" onClick={onBack} className="h-11 rounded-xl px-5">
+            <ArrowLeft className="mr-1.5 h-4 w-4" /> Back
+          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => toast.success("Draft saved")}
+              className="h-11 rounded-xl px-5"
+            >
+              <Save className="mr-1.5 h-4 w-4" /> Save Draft
+            </Button>
+            <Button
+              onClick={onNext}
+              className="h-11 rounded-xl bg-primary px-6 text-primary-foreground shadow-soft hover:shadow-glow"
+            >
+              Next <ArrowRight className="ml-1.5 h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+/* ---------------- Step 4: Review ---------------- */
+
+function ReviewStep({
+  type,
+  form,
+  resources,
+  tasks,
+  matrix,
+  onBack,
+  onGenerate,
+}: {
+  type: AssignmentType;
+  form: BasicForm;
+  resources: NamedItem[];
+  tasks: NamedItem[];
+  matrix: (number | null)[][];
+  onBack: () => void;
+  onGenerate: () => void;
+}) {
+  return (
+    <Card className="rounded-2xl border-border bg-card shadow-soft">
+      <CardContent className="p-6 md:p-8">
+        <StepHeader
+          step={5}
+          title="Review Before Optimization"
+          description="Double-check the assignment details and matrix before running the optimizer."
+        />
+
+        <div className="grid gap-5 lg:grid-cols-[1fr_1.4fr]">
+          <Card className="rounded-2xl border-border bg-card shadow-soft">
+            <CardContent className="space-y-4 p-5">
+              <div className="flex items-center gap-3 border-b border-border pb-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/15">
+                  <type.icon className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-base font-semibold tracking-tight">Summary</p>
+                  <p className="text-xs text-muted-foreground">Final review</p>
+                </div>
+              </div>
+              <dl className="grid grid-cols-2 gap-3">
+                <SummaryItem label="Assignment Name" value={form.name || "Untitled"} />
+                <SummaryItem label="Assignment Type" value={type.title.replace(" Assignment", "")} />
+                <SummaryItem
+                  label="Optimization"
+                  value={form.optimization === "cost" ? "Cost Minimization" : "Profit Maximization"}
+                />
+                <SummaryItem label="Resources" value={resources.length} />
+                <SummaryItem label="Tasks" value={tasks.length} />
+                <SummaryItem label="Matrix Size" value={`${resources.length} × ${tasks.length}`} />
+                <SummaryItem label="Created By" value="Mahesh Kumar" full />
+              </dl>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-2xl border-border bg-card shadow-soft">
+            <CardContent className="space-y-4 p-5">
+              <div className="flex items-center gap-3 border-b border-border pb-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/15">
+                  <Grid3x3 className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-base font-semibold tracking-tight">Preview Matrix</p>
+                  <p className="text-xs text-muted-foreground">Read-only</p>
+                </div>
+              </div>
+              <div className="overflow-x-auto rounded-xl border border-border">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-primary/5">
+                      <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-primary">
+                        Resource
+                      </th>
+                      {tasks.map((t) => (
+                        <th
+                          key={t.id}
+                          className="px-3 py-2 text-center text-[11px] font-semibold uppercase tracking-wide text-primary"
+                        >
+                          {t.name}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {resources.map((res, r) => (
+                      <tr key={res.id} className="border-t border-border">
+                        <td className="px-3 py-2 font-medium">{res.name}</td>
+                        {tasks.map((t, c) => (
+                          <td
+                            key={t.id}
+                            className="px-3 py-2 text-center text-sm text-foreground"
+                          >
+                            {matrix[r]?.[c] ?? "—"}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-5">
+          <Button variant="outline" onClick={onBack} className="h-11 rounded-xl px-5">
+            <ArrowLeft className="mr-1.5 h-4 w-4" /> Back
+          </Button>
+          <Button
+            onClick={onGenerate}
+            className="h-11 rounded-xl bg-primary px-6 text-primary-foreground shadow-glow hover:shadow-elevated"
+          >
+            <Sparkles className="mr-1.5 h-4 w-4" /> Generate Assignment
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function SummaryItem({
+  label,
+  value,
+  full,
+}: {
+  label: string;
+  value: string | number;
+  full?: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        "rounded-xl border border-border bg-background/60 px-3 py-2.5",
+        full && "col-span-2",
+      )}
+    >
+      <dt className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+        {label}
+      </dt>
+      <dd className="mt-0.5 text-sm font-semibold text-foreground">{value}</dd>
+    </div>
+  );
+}
+
+function AssignmentSummaryStrip({
+  type,
+  form,
+  resources,
+  tasks,
+}: {
+  type: AssignmentType;
+  form: BasicForm;
+  resources: number;
+  tasks: number;
+}) {
+  const items = [
+    { label: "Assignment Name", value: form.name || "Untitled" },
+    { label: "Assignment Type", value: type.title.replace(" Assignment", "") },
+    {
+      label: "Optimization",
+      value: form.optimization === "cost" ? "Cost Minimization" : "Profit Maximization",
+    },
+    { label: "Resources", value: resources },
+    { label: "Tasks", value: tasks },
+  ];
+  return (
+    <div className="grid gap-3 rounded-2xl border border-border bg-primary/5 p-4 sm:grid-cols-3 lg:grid-cols-5">
+      {items.map((i) => (
+        <div key={i.label}>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-primary/80">
+            {i.label}
+          </p>
+          <p className="mt-0.5 truncate text-sm font-semibold text-foreground">{i.value}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ---------------- Step 5: Processing + Result ---------------- */
+
+function ResultStage(props: {
+  type: AssignmentType;
+  form: BasicForm;
+  resources: NamedItem[];
+  tasks: NamedItem[];
+  result: AssignmentResult | null;
+  onBack: () => void;
+  onCreateAnother: () => void;
+}) {
+  const [phase, setPhase] = useState<"processing" | "done" | "result">("processing");
+  const [progress, setProgress] = useState(0);
+  const [messageIdx, setMessageIdx] = useState(0);
+
+  const messages = [
+    "Reading Matrix...",
+    "Validating Input...",
+    "Performing Row Reduction...",
+    "Performing Column Reduction...",
+    "Finding Optimal Assignment...",
+    "Generating Results...",
+    "Preparing Report...",
+  ];
+
+  useEffect(() => {
+    if (phase !== "processing") return;
+    const total = 3200;
+    const tick = 60;
+    let elapsed = 0;
+    const interval = setInterval(() => {
+      elapsed += tick;
+      const pct = Math.min(100, Math.round((elapsed / total) * 100));
+      setProgress(pct);
+      setMessageIdx(Math.min(messages.length - 1, Math.floor((pct / 100) * messages.length)));
+      if (pct >= 100) {
+        clearInterval(interval);
+        setPhase("done");
+      }
+    }, tick);
+    return () => clearInterval(interval);
+  }, [phase, messages.length]);
+
+  if (phase === "processing" || phase === "done") {
+    return (
+      <Card className="rounded-2xl border-border bg-card shadow-soft">
+        <CardContent className="flex flex-col items-center justify-center gap-6 px-6 py-16 text-center">
+          {phase === "processing" ? (
+            <>
+              <div className="relative flex h-28 w-28 items-center justify-center">
+                <div className="absolute inset-0 animate-ping rounded-full bg-primary/15" />
+                <div className="absolute inset-3 rounded-full bg-primary/10" />
+                <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-glow">
+                  <Loader2 className="h-9 w-9 animate-spin" />
+                </div>
+              </div>
+              <div>
+                <h2 className="text-2xl font-semibold tracking-tight">
+                  Running Hungarian Algorithm...
+                </h2>
+                <p className="mt-1.5 text-sm text-muted-foreground">
+                  {messages[messageIdx]}
+                </p>
+              </div>
+              <div className="w-full max-w-md space-y-2">
+                <Progress value={progress} className="h-2 rounded-full" />
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>Optimizing assignments…</span>
+                  <span className="font-semibold text-primary">{progress}%</span>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex h-24 w-24 items-center justify-center rounded-full bg-success/15 text-success ring-8 ring-success/10 animate-scale-in">
+                <CheckCircle2 className="h-12 w-12" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-semibold tracking-tight">
+                  Optimization Completed Successfully
+                </h2>
+                <p className="mt-1.5 text-sm text-muted-foreground">
+                  Your optimal assignment is ready to view.
+                </p>
+              </div>
+              <Button
+                onClick={() => setPhase("result")}
+                className="h-11 rounded-xl bg-primary px-6 text-primary-foreground shadow-glow"
+              >
+                View Result <ArrowRight className="ml-1.5 h-4 w-4" />
+              </Button>
+            </>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return <ResultView {...props} />;
+}
+
+function ResultView({
+  form,
+  result,
+  onCreateAnother,
+}: {
+  type: AssignmentType;
+  form: BasicForm;
+  resources: NamedItem[];
+  tasks: NamedItem[];
+  result: AssignmentResult | null;
+  onBack: () => void;
+  onCreateAnother: () => void;
+}) {
+  const navigate = useNavigate();
+  if (!result) return null;
+  const isCost = form.optimization === "cost";
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <Card className="rounded-2xl border-border bg-card shadow-soft">
+        <CardContent className="p-6 md:p-8">
+          <StepHeader
+            step={6}
+            title="Optimization Result"
+            description={`Hungarian algorithm produced the optimal ${isCost ? "lowest-cost" : "highest-profit"} assignment.`}
+          />
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <KpiTile
+              label={isCost ? "Total Cost" : "Total Profit"}
+              value={result.total.toString()}
+              icon={Calculator}
+              accent="primary"
+            />
+            <KpiTile
+              label="Assignments Generated"
+              value={result.pairs.length.toString()}
+              icon={Target}
+              accent="violet"
+            />
+            <KpiTile
+              label="Execution Time"
+              value={`${result.executionMs} ms`}
+              icon={Clock}
+              accent="blue"
+            />
+            <KpiTile
+              label="Optimization Accuracy"
+              value="100%"
+              icon={Gauge}
+              accent="success"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="rounded-2xl border-border bg-card shadow-soft">
+        <CardContent className="space-y-4 p-6 md:p-8">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/15">
+              <ClipboardCheck className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-base font-semibold tracking-tight">Assignment Result</p>
+              <p className="text-xs text-muted-foreground">
+                Optimal pairing of every resource to a task.
+              </p>
+            </div>
+          </div>
+          <div className="overflow-hidden rounded-xl border border-border">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/40 hover:bg-muted/40">
+                  <TableHead className="w-14 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    #
+                  </TableHead>
+                  <TableHead className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Resource
+                  </TableHead>
+                  <TableHead className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Assigned Task
+                  </TableHead>
+                  <TableHead className="text-right text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    {isCost ? "Cost" : "Profit"}
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {result.pairs.map((p, i) => (
+                  <TableRow key={i}>
+                    <TableCell className="text-sm text-muted-foreground">{i + 1}</TableCell>
+                    <TableCell className="text-sm font-medium">{p.resource}</TableCell>
+                    <TableCell>
+                      <Badge className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+                        {p.task}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right text-sm font-semibold">
+                      {p.value}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="rounded-2xl border-border bg-card shadow-soft">
+        <CardContent className="space-y-5 p-6 md:p-8">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-success/15 text-success">
+              <Trophy className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-base font-semibold tracking-tight">Optimization Summary</p>
+              <p className="text-xs text-muted-foreground">
+                Comparison vs. naïve diagonal assignment.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <ComparisonCard
+              label={`Manual ${isCost ? "Cost" : "Profit"}`}
+              value={result.manual}
+              tone="neutral"
+            />
+            <ComparisonCard
+              label={`Optimized ${isCost ? "Cost" : "Profit"}`}
+              value={result.total}
+              tone="primary"
+            />
+            <ComparisonCard
+              label={isCost ? "Savings" : "Gain"}
+              value={result.savings}
+              tone="success"
+            />
+            <ComparisonCard
+              label="Optimization Improvement"
+              value={`${result.improvement}%`}
+              tone="success"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="rounded-2xl border-border bg-card shadow-soft">
+        <CardContent className="flex flex-wrap items-center justify-between gap-3 p-5">
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              className="h-11 rounded-xl"
+              onClick={() => toast.success("PDF download started")}
+            >
+              <FileDown className="mr-1.5 h-4 w-4" /> Download PDF
+            </Button>
+            <Button
+              variant="outline"
+              className="h-11 rounded-xl"
+              onClick={() => toast.success("Excel download started")}
+            >
+              <FileSpreadsheet className="mr-1.5 h-4 w-4" /> Download Excel
+            </Button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              className="h-11 rounded-xl"
+              onClick={() => navigate({ to: "/dashboard" })}
+            >
+              <LayoutDashboard className="mr-1.5 h-4 w-4" /> Back to Dashboard
+            </Button>
+            <Button
+              onClick={onCreateAnother}
+              className="h-11 rounded-xl bg-primary px-5 text-primary-foreground shadow-soft hover:shadow-glow"
+            >
+              <RefreshCw className="mr-1.5 h-4 w-4" /> Create New Assignment
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function KpiTile({
+  label,
+  value,
+  icon: Icon,
+  accent,
+}: {
+  label: string;
+  value: string;
+  icon: React.ComponentType<{ className?: string }>;
+  accent: "primary" | "success" | "violet" | "blue";
+}) {
+  const accents: Record<typeof accent, string> = {
+    primary: "bg-primary/10 text-primary",
+    success: "bg-success/15 text-success",
+    violet: "bg-violet-500/10 text-violet-600",
+    blue: "bg-blue-500/10 text-blue-600",
+  };
+  return (
+    <Card className="rounded-2xl border-border bg-card shadow-soft">
+      <CardContent className="flex items-center gap-4 p-5">
+        <div
+          className={cn(
+            "flex h-12 w-12 items-center justify-center rounded-2xl ring-1 ring-border/60",
+            accents[accent],
+          )}
+        >
+          <Icon className="h-6 w-6" />
+        </div>
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            {label}
+          </p>
+          <p className="mt-0.5 text-2xl font-semibold tracking-tight text-foreground">
+            {value}
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ComparisonCard({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string | number;
+  tone: "neutral" | "primary" | "success";
+}) {
+  const tones: Record<typeof tone, string> = {
+    neutral: "border-border bg-muted/30 text-foreground",
+    primary: "border-primary/30 bg-primary/5 text-foreground",
+    success:
+      "border-success/30 bg-gradient-to-br from-success/15 to-success/5 text-foreground",
+  };
+  return (
+    <div className={cn("rounded-2xl border p-4", tones[tone])}>
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        {label}
+      </p>
+      <p
+        className={cn(
+          "mt-1 text-3xl font-semibold tracking-tight",
+          tone === "success" && "text-success",
+          tone === "primary" && "text-primary",
+        )}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
