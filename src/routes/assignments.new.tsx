@@ -250,11 +250,11 @@ function CreateAssignmentPage() {
     optimization: "cost",
   });
   const [resources, setResources] = useState<NamedItem[]>([
-    { id: uid(), name: "John" },
-    { id: uid(), name: "David" },
     { id: uid(), name: "Rahul" },
     { id: uid(), name: "Amit" },
     { id: uid(), name: "Simran" },
+    { id: uid(), name: "Pooja" },
+    { id: uid(), name: "John" },
   ]);
   const [tasks, setTasks] = useState<NamedItem[]>([
     { id: uid(), name: "Module 1" },
@@ -263,12 +263,49 @@ function CreateAssignmentPage() {
     { id: uid(), name: "Module 4" },
     { id: uid(), name: "Module 5" },
   ]);
+  const [matrix, setMatrix] = useState<(number | null)[][]>([
+    [9, 2, 7, 8, 6],
+    [6, 4, 3, 7, 5],
+    [5, 8, 1, 8, 4],
+    [7, 6, 9, 4, 3],
+    [8, 3, 2, 6, 7],
+  ]);
+  const [result, setResult] = useState<AssignmentResult | null>(null);
+
+  // Keep matrix shape in sync with resources × tasks.
+  useEffect(() => {
+    setMatrix((prev) => {
+      const rows = resources.length;
+      const cols = tasks.length;
+      const next: (number | null)[][] = [];
+      for (let r = 0; r < rows; r++) {
+        const row: (number | null)[] = [];
+        for (let c = 0; c < cols; c++) {
+          row.push(prev[r]?.[c] ?? null);
+        }
+        next.push(row);
+      }
+      return next;
+    });
+  }, [resources.length, tasks.length]);
 
   const reset = () => {
     setSelected(null);
     setStep(1);
     setForm({ name: "", description: "", optimization: "cost" });
+    setResult(null);
   };
+
+  const matrixComplete = useMemo(
+    () =>
+      matrix.length > 0 &&
+      matrix.every(
+        (row) =>
+          row.length === tasks.length &&
+          row.every((v) => typeof v === "number" && !Number.isNaN(v)),
+      ),
+    [matrix, tasks.length],
+  );
 
   const handleNext = () => {
     if (step === 1) {
@@ -283,14 +320,39 @@ function CreateAssignmentPage() {
         return;
       }
       toast.success("Resources & tasks saved");
+    } else if (step === 3) {
+      if (!matrixComplete) {
+        toast.error("Complete all matrix values before continuing");
+        return;
+      }
+      toast.success("Matrix saved");
     }
-    setStep((s) => Math.min(s + 1, 4));
+    setStep((s) => Math.min(s + 1, 5));
   };
 
   const handleBack = () => {
     if (step === 1) reset();
     else setStep((s) => s - 1);
   };
+
+  const runOptimization = () => {
+    const start = performance.now();
+    const numeric = matrix.map((row) => row.map((v) => (v ?? 0) as number));
+    const { pairs, total } = solveAssignment(
+      numeric,
+      resources.map((r) => r.name),
+      tasks.map((t) => t.name),
+      form.optimization,
+    );
+    const manual = diagonalTotal(numeric);
+    const savings =
+      form.optimization === "cost" ? Math.max(manual - total, 0) : Math.max(total - manual, 0);
+    const baseline = form.optimization === "cost" ? manual : manual || 1;
+    const improvement = baseline > 0 ? Math.round((savings / baseline) * 100) : 0;
+    const executionMs = Math.max(1, Math.round(performance.now() - start));
+    setResult({ pairs, total, manual, savings, improvement, executionMs });
+  };
+
 
   return (
     <SidebarProvider>
