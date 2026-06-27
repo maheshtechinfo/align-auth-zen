@@ -43,23 +43,23 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 
 const workspaceItems = [
-  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Assignments", url: "/dashboard/assignments", icon: ClipboardList },
-  { title: "Create Assignment", url: "/assignments/new", icon: PlusSquare },
-  { title: "Assignment History", url: "/dashboard/assignments/history", icon: History },
-  { title: "Templates", url: "/dashboard/templates", icon: LayoutTemplate },
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, enabled: true },
+  { title: "Assignments", url: "/assignments/history", icon: ClipboardList, enabled: true },
+  { title: "Create Assignment", url: "/assignments/new", icon: PlusSquare, enabled: true },
+  { title: "Assignment History", url: "/assignments/history", icon: History, enabled: true },
+  { title: "Templates", url: "/templates", icon: LayoutTemplate, enabled: true },
 ];
 
 const insightsItems = [
-  { title: "Reports", url: "/dashboard/reports", icon: BarChart3 },
-  { title: "Report History", url: "/dashboard/reports/history", icon: FileBarChart },
-  { title: "Notifications", url: "/dashboard/notifications", icon: Bell, badge: 4 },
-  { title: "Activity Log", url: "/dashboard/activity", icon: Activity },
+  { title: "Reports", url: "/reports/history", icon: BarChart3, enabled: true },
+  { title: "Report History", url: "/reports/history", icon: FileBarChart, enabled: true },
+  { title: "Notifications", url: "#", icon: Bell, badge: 4, enabled: false },
+  { title: "Activity Log", url: "#", icon: Activity, enabled: false },
 ];
 
 const systemItems = [
-  { title: "Settings", url: "/dashboard/settings", icon: Settings },
-  { title: "Help & Guide", url: "/dashboard/help", icon: HelpCircle },
+  { title: "Settings", url: "#", icon: Settings, enabled: false },
+  { title: "Help & Guide", url: "#", icon: HelpCircle, enabled: false },
 ];
 
 export function AppSidebar() {
@@ -98,6 +98,7 @@ type NavItem = {
   url: string;
   icon: React.ComponentType<{ className?: string }>;
   badge?: number;
+  enabled?: boolean;
 };
 
 function NavGroup({
@@ -116,27 +117,30 @@ function NavGroup({
         <SidebarMenu>
           {items.map((item) => {
             const active = isActive(item.url);
+            const inner = (
+              <>
+                <item.icon className="h-4 w-4" />
+                <span>{item.title}</span>
+                {item.badge && (
+                  <Badge
+                    variant="secondary"
+                    className="ml-auto h-5 rounded-full bg-primary/10 px-1.5 text-[10px] font-semibold text-primary"
+                  >
+                    {item.badge}
+                  </Badge>
+                )}
+              </>
+            );
             return (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton asChild isActive={active} tooltip={item.title}>
-                  <a
-                    href={
-                      item.url === "/dashboard" || item.url === "/assignments/new"
-                        ? item.url
-                        : "#"
-                    }
-                  >
-                    <item.icon className="h-4 w-4" />
-                    <span>{item.title}</span>
-                    {item.badge && (
-                      <Badge
-                        variant="secondary"
-                        className="ml-auto h-5 rounded-full bg-primary/10 px-1.5 text-[10px] font-semibold text-primary"
-                      >
-                        {item.badge}
-                      </Badge>
-                    )}
-                  </a>
+                  {item.enabled ? (
+                    <Link to={item.url}>{inner}</Link>
+                  ) : (
+                    <a href="#" onClick={(e) => e.preventDefault()}>
+                      {inner}
+                    </a>
+                  )}
                 </SidebarMenuButton>
               </SidebarMenuItem>
             );
