@@ -9,13 +9,22 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TemplatesRouteImport } from './routes/templates'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ReportsHistoryRouteImport } from './routes/reports.history'
 import { Route as AssignmentsNewRouteImport } from './routes/assignments.new'
+import { Route as AssignmentsHistoryRouteImport } from './routes/assignments.history'
+import { Route as AssignmentsIdRouteImport } from './routes/assignments.$id'
 
+const TemplatesRoute = TemplatesRouteImport.update({
+  id: '/templates',
+  path: '/templates',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
@@ -41,9 +50,24 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReportsHistoryRoute = ReportsHistoryRouteImport.update({
+  id: '/reports/history',
+  path: '/reports/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AssignmentsNewRoute = AssignmentsNewRouteImport.update({
   id: '/assignments/new',
   path: '/assignments/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AssignmentsHistoryRoute = AssignmentsHistoryRouteImport.update({
+  id: '/assignments/history',
+  path: '/assignments/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AssignmentsIdRoute = AssignmentsIdRouteImport.update({
+  id: '/assignments/$id',
+  path: '/assignments/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -53,7 +77,11 @@ export interface FileRoutesByFullPath {
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/templates': typeof TemplatesRoute
+  '/assignments/$id': typeof AssignmentsIdRoute
+  '/assignments/history': typeof AssignmentsHistoryRoute
   '/assignments/new': typeof AssignmentsNewRoute
+  '/reports/history': typeof ReportsHistoryRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -61,7 +89,11 @@ export interface FileRoutesByTo {
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/templates': typeof TemplatesRoute
+  '/assignments/$id': typeof AssignmentsIdRoute
+  '/assignments/history': typeof AssignmentsHistoryRoute
   '/assignments/new': typeof AssignmentsNewRoute
+  '/reports/history': typeof ReportsHistoryRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -70,7 +102,11 @@ export interface FileRoutesById {
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/templates': typeof TemplatesRoute
+  '/assignments/$id': typeof AssignmentsIdRoute
+  '/assignments/history': typeof AssignmentsHistoryRoute
   '/assignments/new': typeof AssignmentsNewRoute
+  '/reports/history': typeof ReportsHistoryRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -80,7 +116,11 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/login'
     | '/register'
+    | '/templates'
+    | '/assignments/$id'
+    | '/assignments/history'
     | '/assignments/new'
+    | '/reports/history'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -88,7 +128,11 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/login'
     | '/register'
+    | '/templates'
+    | '/assignments/$id'
+    | '/assignments/history'
     | '/assignments/new'
+    | '/reports/history'
   id:
     | '__root__'
     | '/'
@@ -96,7 +140,11 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/login'
     | '/register'
+    | '/templates'
+    | '/assignments/$id'
+    | '/assignments/history'
     | '/assignments/new'
+    | '/reports/history'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -105,11 +153,22 @@ export interface RootRouteChildren {
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
+  TemplatesRoute: typeof TemplatesRoute
+  AssignmentsIdRoute: typeof AssignmentsIdRoute
+  AssignmentsHistoryRoute: typeof AssignmentsHistoryRoute
   AssignmentsNewRoute: typeof AssignmentsNewRoute
+  ReportsHistoryRoute: typeof ReportsHistoryRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/templates': {
+      id: '/templates'
+      path: '/templates'
+      fullPath: '/templates'
+      preLoaderRoute: typeof TemplatesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/register': {
       id: '/register'
       path: '/register'
@@ -145,11 +204,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reports/history': {
+      id: '/reports/history'
+      path: '/reports/history'
+      fullPath: '/reports/history'
+      preLoaderRoute: typeof ReportsHistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/assignments/new': {
       id: '/assignments/new'
       path: '/assignments/new'
       fullPath: '/assignments/new'
       preLoaderRoute: typeof AssignmentsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/assignments/history': {
+      id: '/assignments/history'
+      path: '/assignments/history'
+      fullPath: '/assignments/history'
+      preLoaderRoute: typeof AssignmentsHistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/assignments/$id': {
+      id: '/assignments/$id'
+      path: '/assignments/$id'
+      fullPath: '/assignments/$id'
+      preLoaderRoute: typeof AssignmentsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -161,7 +241,11 @@ const rootRouteChildren: RootRouteChildren = {
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
+  TemplatesRoute: TemplatesRoute,
+  AssignmentsIdRoute: AssignmentsIdRoute,
+  AssignmentsHistoryRoute: AssignmentsHistoryRoute,
   AssignmentsNewRoute: AssignmentsNewRoute,
+  ReportsHistoryRoute: ReportsHistoryRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
