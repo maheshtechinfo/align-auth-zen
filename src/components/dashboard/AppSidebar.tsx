@@ -40,8 +40,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { useProfile } from "@/lib/user-profile";
+import { UserAvatar } from "@/components/dashboard/UserAvatar";
+import { LogoutDialog } from "@/components/dashboard/LogoutDialog";
 
 const workspaceItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, enabled: true },
