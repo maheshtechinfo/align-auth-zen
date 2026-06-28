@@ -1,8 +1,8 @@
-import { Bell, Search } from "lucide-react";
+import { Bell, Search, User, Pencil, KeyRound, LogOut } from "lucide-react";
+import { useState } from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import {
   DropdownMenu,
@@ -13,8 +13,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Link } from "@tanstack/react-router";
+import { useProfile } from "@/lib/user-profile";
+import { UserAvatar } from "@/components/dashboard/UserAvatar";
+import { LogoutDialog } from "@/components/dashboard/LogoutDialog";
 
 export function TopNav() {
+  const profile = useProfile();
+  const [logoutOpen, setLogoutOpen] = useState(false);
+
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur-md md:px-6">
       <SidebarTrigger className="h-9 w-9 rounded-lg" />
@@ -43,28 +49,40 @@ export function TopNav() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="flex items-center gap-2 rounded-xl p-1 pr-3 transition-colors hover:bg-muted">
-              <Avatar className="h-8 w-8 ring-2 ring-primary/20">
-                <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">JC</AvatarFallback>
-              </Avatar>
+              <UserAvatar profile={profile} className="h-8 w-8" fallbackClassName="text-xs" />
               <div className="hidden text-left leading-tight md:block">
-                <p className="text-sm font-semibold">Jane Cooper</p>
-                <p className="text-xs text-muted-foreground">Resource Manager</p>
+                <p className="text-sm font-semibold">{profile.fullName}</p>
+                <p className="text-xs text-muted-foreground">{profile.role}</p>
               </div>
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56 rounded-xl shadow-elevated">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>My Profile</DropdownMenuItem>
-            <DropdownMenuItem>Edit Profile</DropdownMenuItem>
-            <DropdownMenuItem>Change Password</DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/profile"><User className="mr-2 h-4 w-4" /> My Profile</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/profile/edit"><Pencil className="mr-2 h-4 w-4" /> Edit Profile</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/profile/change-password"><KeyRound className="mr-2 h-4 w-4" /> Change Password</Link>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild className="text-destructive focus:text-destructive">
-              <Link to="/login">Logout</Link>
+            <DropdownMenuItem
+              onSelect={(e) => {
+                e.preventDefault();
+                setLogoutOpen(true);
+              }}
+              className="text-destructive focus:text-destructive"
+            >
+              <LogOut className="mr-2 h-4 w-4" /> Logout
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      <LogoutDialog open={logoutOpen} onOpenChange={setLogoutOpen} />
     </header>
   );
 }
