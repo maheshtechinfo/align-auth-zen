@@ -1,4 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
+import { useState } from "react";
 import {
   LayoutDashboard,
   ClipboardList,
@@ -39,8 +40,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { useProfile } from "@/lib/user-profile";
+import { UserAvatar } from "@/components/dashboard/UserAvatar";
+import { LogoutDialog } from "@/components/dashboard/LogoutDialog";
 
 const workspaceItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, enabled: true },
@@ -152,45 +155,57 @@ function NavGroup({
 }
 
 function ProfileMenu() {
+  const profile = useProfile();
+  const [logoutOpen, setLogoutOpen] = useState(false);
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button className="flex w-full items-center gap-2 rounded-lg p-2 text-left transition-colors hover:bg-sidebar-accent">
-          <Avatar className="h-9 w-9 ring-2 ring-primary/20">
-            <AvatarFallback className="bg-primary text-primary-foreground text-sm font-semibold">
-              JC
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex min-w-0 flex-1 flex-col leading-tight group-data-[collapsible=icon]:hidden">
-            <span className="truncate text-sm font-semibold">Jane Cooper</span>
-            <span className="truncate text-xs text-muted-foreground">Resource Manager</span>
-          </div>
-          <ChevronUp className="h-4 w-4 text-muted-foreground group-data-[collapsible=icon]:hidden" />
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent side="top" align="start" className="w-60 rounded-xl shadow-elevated">
-        <DropdownMenuLabel className="flex items-center gap-2">
-          <Avatar className="h-8 w-8">
-            <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
-              JC
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex flex-col">
-            <span className="text-sm font-semibold">Jane Cooper</span>
-            <span className="text-xs font-normal text-muted-foreground">jane@taskalign.com</span>
-          </div>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem><User className="mr-2 h-4 w-4" /> My Profile</DropdownMenuItem>
-        <DropdownMenuItem><Pencil className="mr-2 h-4 w-4" /> Edit Profile</DropdownMenuItem>
-        <DropdownMenuItem><KeyRound className="mr-2 h-4 w-4" /> Change Password</DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem asChild className="text-destructive focus:text-destructive">
-          <Link to="/login">
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button className="flex w-full items-center gap-2 rounded-lg p-2 text-left transition-colors hover:bg-sidebar-accent">
+            <UserAvatar profile={profile} className="h-9 w-9" fallbackClassName="text-sm" />
+            <div className="flex min-w-0 flex-1 flex-col leading-tight group-data-[collapsible=icon]:hidden">
+              <span className="truncate text-sm font-semibold">{profile.fullName}</span>
+              <span className="truncate text-xs text-muted-foreground">{profile.email}</span>
+            </div>
+            <ChevronUp className="h-4 w-4 text-muted-foreground group-data-[collapsible=icon]:hidden" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent side="top" align="start" className="w-64 rounded-xl shadow-elevated">
+          <DropdownMenuLabel className="flex items-center gap-2">
+            <UserAvatar profile={profile} className="h-9 w-9" fallbackClassName="text-xs" />
+            <div className="flex min-w-0 flex-col">
+              <span className="truncate text-sm font-semibold">{profile.fullName}</span>
+              <span className="truncate text-xs font-normal text-muted-foreground">
+                {profile.email}
+              </span>
+            </div>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <Link to="/profile"><User className="mr-2 h-4 w-4" /> My Profile</Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link to="/profile/edit"><Pencil className="mr-2 h-4 w-4" /> Edit Profile</Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link to="/profile/change-password">
+              <KeyRound className="mr-2 h-4 w-4" /> Change Password
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onSelect={(e) => {
+              e.preventDefault();
+              setLogoutOpen(true);
+            }}
+            className="text-destructive focus:text-destructive"
+          >
             <LogOut className="mr-2 h-4 w-4" /> Logout
-          </Link>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <LogoutDialog open={logoutOpen} onOpenChange={setLogoutOpen} />
+    </>
   );
 }
+

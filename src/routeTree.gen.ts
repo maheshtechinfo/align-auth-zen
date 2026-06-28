@@ -11,11 +11,14 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TemplatesRouteImport } from './routes/templates'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ReportsHistoryRouteImport } from './routes/reports.history'
+import { Route as ProfileEditRouteImport } from './routes/profile.edit'
+import { Route as ProfileChangePasswordRouteImport } from './routes/profile.change-password'
 import { Route as AssignmentsNewRouteImport } from './routes/assignments.new'
 import { Route as AssignmentsHistoryRouteImport } from './routes/assignments.history'
 import { Route as AssignmentsIdRouteImport } from './routes/assignments.$id'
@@ -28,6 +31,11 @@ const TemplatesRoute = TemplatesRouteImport.update({
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -55,6 +63,16 @@ const ReportsHistoryRoute = ReportsHistoryRouteImport.update({
   path: '/reports/history',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfileEditRoute = ProfileEditRouteImport.update({
+  id: '/edit',
+  path: '/edit',
+  getParentRoute: () => ProfileRoute,
+} as any)
+const ProfileChangePasswordRoute = ProfileChangePasswordRouteImport.update({
+  id: '/change-password',
+  path: '/change-password',
+  getParentRoute: () => ProfileRoute,
+} as any)
 const AssignmentsNewRoute = AssignmentsNewRouteImport.update({
   id: '/assignments/new',
   path: '/assignments/new',
@@ -76,11 +94,14 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/profile': typeof ProfileRouteWithChildren
   '/register': typeof RegisterRoute
   '/templates': typeof TemplatesRoute
   '/assignments/$id': typeof AssignmentsIdRoute
   '/assignments/history': typeof AssignmentsHistoryRoute
   '/assignments/new': typeof AssignmentsNewRoute
+  '/profile/change-password': typeof ProfileChangePasswordRoute
+  '/profile/edit': typeof ProfileEditRoute
   '/reports/history': typeof ReportsHistoryRoute
 }
 export interface FileRoutesByTo {
@@ -88,11 +109,14 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/profile': typeof ProfileRouteWithChildren
   '/register': typeof RegisterRoute
   '/templates': typeof TemplatesRoute
   '/assignments/$id': typeof AssignmentsIdRoute
   '/assignments/history': typeof AssignmentsHistoryRoute
   '/assignments/new': typeof AssignmentsNewRoute
+  '/profile/change-password': typeof ProfileChangePasswordRoute
+  '/profile/edit': typeof ProfileEditRoute
   '/reports/history': typeof ReportsHistoryRoute
 }
 export interface FileRoutesById {
@@ -101,11 +125,14 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/profile': typeof ProfileRouteWithChildren
   '/register': typeof RegisterRoute
   '/templates': typeof TemplatesRoute
   '/assignments/$id': typeof AssignmentsIdRoute
   '/assignments/history': typeof AssignmentsHistoryRoute
   '/assignments/new': typeof AssignmentsNewRoute
+  '/profile/change-password': typeof ProfileChangePasswordRoute
+  '/profile/edit': typeof ProfileEditRoute
   '/reports/history': typeof ReportsHistoryRoute
 }
 export interface FileRouteTypes {
@@ -115,11 +142,14 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/forgot-password'
     | '/login'
+    | '/profile'
     | '/register'
     | '/templates'
     | '/assignments/$id'
     | '/assignments/history'
     | '/assignments/new'
+    | '/profile/change-password'
+    | '/profile/edit'
     | '/reports/history'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -127,11 +157,14 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/forgot-password'
     | '/login'
+    | '/profile'
     | '/register'
     | '/templates'
     | '/assignments/$id'
     | '/assignments/history'
     | '/assignments/new'
+    | '/profile/change-password'
+    | '/profile/edit'
     | '/reports/history'
   id:
     | '__root__'
@@ -139,11 +172,14 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/forgot-password'
     | '/login'
+    | '/profile'
     | '/register'
     | '/templates'
     | '/assignments/$id'
     | '/assignments/history'
     | '/assignments/new'
+    | '/profile/change-password'
+    | '/profile/edit'
     | '/reports/history'
   fileRoutesById: FileRoutesById
 }
@@ -152,6 +188,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
+  ProfileRoute: typeof ProfileRouteWithChildren
   RegisterRoute: typeof RegisterRoute
   TemplatesRoute: typeof TemplatesRoute
   AssignmentsIdRoute: typeof AssignmentsIdRoute
@@ -174,6 +211,13 @@ declare module '@tanstack/react-router' {
       path: '/register'
       fullPath: '/register'
       preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -211,6 +255,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReportsHistoryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profile/edit': {
+      id: '/profile/edit'
+      path: '/edit'
+      fullPath: '/profile/edit'
+      preLoaderRoute: typeof ProfileEditRouteImport
+      parentRoute: typeof ProfileRoute
+    }
+    '/profile/change-password': {
+      id: '/profile/change-password'
+      path: '/change-password'
+      fullPath: '/profile/change-password'
+      preLoaderRoute: typeof ProfileChangePasswordRouteImport
+      parentRoute: typeof ProfileRoute
+    }
     '/assignments/new': {
       id: '/assignments/new'
       path: '/assignments/new'
@@ -235,11 +293,25 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface ProfileRouteChildren {
+  ProfileChangePasswordRoute: typeof ProfileChangePasswordRoute
+  ProfileEditRoute: typeof ProfileEditRoute
+}
+
+const ProfileRouteChildren: ProfileRouteChildren = {
+  ProfileChangePasswordRoute: ProfileChangePasswordRoute,
+  ProfileEditRoute: ProfileEditRoute,
+}
+
+const ProfileRouteWithChildren =
+  ProfileRoute._addFileChildren(ProfileRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
+  ProfileRoute: ProfileRouteWithChildren,
   RegisterRoute: RegisterRoute,
   TemplatesRoute: TemplatesRoute,
   AssignmentsIdRoute: AssignmentsIdRoute,
