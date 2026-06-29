@@ -1,4 +1,5 @@
-import { Bell, Search, User, Pencil, KeyRound, LogOut } from "lucide-react";
+import { Search, User, Pencil, KeyRound, LogOut } from "lucide-react";
+import { NotificationsBell } from "@/components/dashboard/NotificationsBell";
 import { useState } from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Input } from "@/components/ui/input";
@@ -38,13 +39,7 @@ export function TopNav() {
       </div>
 
       <div className="ml-auto flex items-center gap-2">
-        <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-xl">
-          <Bell className="h-5 w-5" />
-          <span className="absolute right-2 top-2 flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary/60" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
-          </span>
-        </Button>
+        <NotificationsBell />
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
