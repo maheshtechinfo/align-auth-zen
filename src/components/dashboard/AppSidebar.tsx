@@ -56,13 +56,13 @@ const workspaceItems = [
 const insightsItems = [
   { title: "Reports", url: "/reports/history", icon: BarChart3, enabled: true },
   { title: "Report History", url: "/reports/history", icon: FileBarChart, enabled: true },
-  { title: "Notifications", url: "#", icon: Bell, badge: 4, enabled: false },
-  { title: "Activity Log", url: "#", icon: Activity, enabled: false },
+  { title: "Notifications", url: "/notifications", icon: Bell, badge: 4, enabled: true },
+  { title: "Activity Log", url: "/activity", icon: Activity, enabled: true },
 ];
 
 const systemItems = [
-  { title: "Settings", url: "#", icon: Settings, enabled: false },
-  { title: "Help & Guide", url: "#", icon: HelpCircle, enabled: false },
+  { title: "Settings", url: "/settings", icon: Settings, enabled: true },
+  { title: "Help & Guide", url: "/help", icon: HelpCircle, enabled: true },
 ];
 
 export function AppSidebar() {
