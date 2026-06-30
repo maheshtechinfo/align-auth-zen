@@ -14,6 +14,7 @@ import {
   HelpCircle,
   Sparkles,
   ChevronUp,
+  ChevronDown,
   User,
   Pencil,
   KeyRound,
@@ -31,7 +32,15 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,24 +54,44 @@ import { useProfile } from "@/lib/user-profile";
 import { UserAvatar } from "@/components/dashboard/UserAvatar";
 import { LogoutDialog } from "@/components/dashboard/LogoutDialog";
 
-const workspaceItems = [
-  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, enabled: true },
-  { title: "Assignments", url: "/assignments/history", icon: ClipboardList, enabled: true },
-  { title: "Create Assignment", url: "/assignments/new", icon: PlusSquare, enabled: true },
-  { title: "Assignment History", url: "/assignments/history", icon: History, enabled: true },
-  { title: "Templates", url: "/templates", icon: LayoutTemplate, enabled: true },
-];
+type LeafItem = {
+  title: string;
+  url: string;
+  icon: React.ComponentType<{ className?: string }>;
+  badge?: number;
+};
 
-const insightsItems = [
-  { title: "Reports", url: "/reports/history", icon: BarChart3, enabled: true },
-  { title: "Report History", url: "/reports/history", icon: FileBarChart, enabled: true },
-  { title: "Notifications", url: "/notifications", icon: Bell, badge: 4, enabled: true },
-  { title: "Activity Log", url: "/activity", icon: Activity, enabled: true },
-];
+type GroupItem = {
+  title: string;
+  icon: React.ComponentType<{ className?: string }>;
+  children: LeafItem[];
+};
 
-const systemItems = [
-  { title: "Settings", url: "/settings", icon: Settings, enabled: true },
-  { title: "Help & Guide", url: "/help", icon: HelpCircle, enabled: true },
+const dashboardItem: LeafItem = { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard };
+
+const assignmentsGroup: GroupItem = {
+  title: "Assignments",
+  icon: ClipboardList,
+  children: [
+    { title: "Create Assignment", url: "/assignments/new", icon: PlusSquare },
+    { title: "Assignment History", url: "/assignments/history", icon: History },
+    { title: "Templates", url: "/templates", icon: LayoutTemplate },
+  ],
+};
+
+const reportsGroup: GroupItem = {
+  title: "Reports",
+  icon: BarChart3,
+  children: [
+    { title: "Report History", url: "/reports/history", icon: FileBarChart },
+    { title: "Notifications", url: "/notifications", icon: Bell, badge: 4 },
+    { title: "Activity Log", url: "/activity", icon: Activity },
+  ],
+};
+
+const systemItems: LeafItem[] = [
+  { title: "Settings", url: "/settings", icon: Settings },
+  { title: "Help & Guide", url: "/help", icon: HelpCircle },
 ];
 
 export function AppSidebar() {
@@ -84,9 +113,50 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        <NavGroup label="Workspace" items={workspaceItems} isActive={isActive} />
-        <NavGroup label="Insights" items={insightsItems} isActive={isActive} />
-        <NavGroup label="System" items={systemItems} isActive={isActive} />
+        <SidebarGroup>
+          <SidebarGroupLabel>Workspace</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={isActive(dashboardItem.url)} tooltip={dashboardItem.title}>
+                  <Link to={dashboardItem.url}>
+                    <dashboardItem.icon className="h-4 w-4" />
+                    <span>{dashboardItem.title}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <CollapsibleGroup group={assignmentsGroup} pathname={pathname} isActive={isActive} />
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Insights</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <CollapsibleGroup group={reportsGroup} pathname={pathname} isActive={isActive} />
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>System</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {systemItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={item.title}>
+                    <Link to={item.url}>
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border p-2">
@@ -96,61 +166,54 @@ export function AppSidebar() {
   );
 }
 
-type NavItem = {
-  title: string;
-  url: string;
-  icon: React.ComponentType<{ className?: string }>;
-  badge?: number;
-  enabled?: boolean;
-};
-
-function NavGroup({
-  label,
-  items,
+function CollapsibleGroup({
+  group,
+  pathname,
   isActive,
 }: {
-  label: string;
-  items: NavItem[];
+  group: GroupItem;
+  pathname: string;
   isActive: (url: string) => boolean;
 }) {
+  const childActive = group.children.some((c) => pathname === c.url);
+  const [open, setOpen] = useState(childActive);
+
   return (
-    <SidebarGroup>
-      <SidebarGroupLabel>{label}</SidebarGroupLabel>
-      <SidebarGroupContent>
-        <SidebarMenu>
-          {items.map((item) => {
-            const active = isActive(item.url);
-            const inner = (
-              <>
-                <item.icon className="h-4 w-4" />
-                <span>{item.title}</span>
-                {item.badge && (
-                  <Badge
-                    variant="secondary"
-                    className="ml-auto h-5 rounded-full bg-primary/10 px-1.5 text-[10px] font-semibold text-primary"
-                  >
-                    {item.badge}
-                  </Badge>
-                )}
-              </>
-            );
-            return (
-              <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton asChild isActive={active} tooltip={item.title}>
-                  {item.enabled ? (
-                    <Link to={item.url}>{inner}</Link>
-                  ) : (
-                    <a href="#" onClick={(e) => e.preventDefault()}>
-                      {inner}
-                    </a>
-                  )}
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            );
-          })}
-        </SidebarMenu>
-      </SidebarGroupContent>
-    </SidebarGroup>
+    <Collapsible open={open || childActive} onOpenChange={setOpen} asChild>
+      <SidebarMenuItem>
+        <CollapsibleTrigger asChild>
+          <SidebarMenuButton tooltip={group.title} isActive={childActive}>
+            <group.icon className="h-4 w-4" />
+            <span>{group.title}</span>
+            <ChevronDown
+              className={`ml-auto h-4 w-4 transition-transform ${(open || childActive) ? "rotate-180" : ""}`}
+            />
+          </SidebarMenuButton>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <SidebarMenuSub>
+            {group.children.map((child) => (
+              <SidebarMenuSubItem key={child.title}>
+                <SidebarMenuSubButton asChild isActive={isActive(child.url)}>
+                  <Link to={child.url}>
+                    <child.icon className="h-3.5 w-3.5" />
+                    <span>{child.title}</span>
+                    {child.badge && (
+                      <Badge
+                        variant="secondary"
+                        className="ml-auto h-5 rounded-full bg-primary/10 px-1.5 text-[10px] font-semibold text-primary"
+                      >
+                        {child.badge}
+                      </Badge>
+                    )}
+                  </Link>
+                </SidebarMenuSubButton>
+              </SidebarMenuSubItem>
+            ))}
+          </SidebarMenuSub>
+        </CollapsibleContent>
+      </SidebarMenuItem>
+    </Collapsible>
   );
 }
 
@@ -208,4 +271,3 @@ function ProfileMenu() {
     </>
   );
 }
-
