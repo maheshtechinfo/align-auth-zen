@@ -5,8 +5,6 @@ import {
   Download,
   FileText,
   FileSpreadsheet,
-  Eye,
-  Trash2,
   Plus,
   FileBarChart,
   Files,
