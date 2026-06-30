@@ -165,9 +165,7 @@ const barData = [
 
 const pieData = [
   { name: "Completed", value: 924, color: "oklch(0.65 0.16 155)" },
-  { name: "In Progress", value: 148, color: "oklch(0.55 0.24 285)" },
-  { name: "Pending", value: 212, color: "oklch(0.78 0.15 80)" },
-  { name: "Cancelled", value: 42, color: "oklch(0.6 0.22 25)" },
+  { name: "Draft", value: 148, color: "oklch(0.55 0.24 285)" },
 ];
 
 function ChartsRow() {
@@ -272,40 +270,27 @@ function ChartsRow() {
 type AssignmentRow = {
   id: string;
   title: string;
-  assignee: { name: string; initials: string };
   type: string;
-  priority: "Low" | "Medium" | "High" | "Critical";
-  status: "Completed" | "In Progress" | "Pending" | "Cancelled";
+  status: "Completed" | "Draft";
   due: string;
 };
 
 const allAssignments: AssignmentRow[] = [
-  { id: "TA-2041", title: "Design system audit Q3",     assignee: { name: "Alex Rivera",   initials: "AR" }, type: "Design",      priority: "High",     status: "In Progress", due: "Jun 28, 2026" },
-  { id: "TA-2040", title: "API rate-limit refactor",    assignee: { name: "Priya Shah",    initials: "PS" }, type: "Development", priority: "Critical", status: "Pending",     due: "Jun 26, 2026" },
-  { id: "TA-2039", title: "Onboarding usability study", assignee: { name: "Mei Lin",       initials: "ML" }, type: "Research",    priority: "Medium",   status: "Completed",   due: "Jun 20, 2026" },
-  { id: "TA-2038", title: "Q3 campaign launch plan",    assignee: { name: "Diego Alvarez", initials: "DA" }, type: "Marketing",   priority: "High",     status: "In Progress", due: "Jul 02, 2026" },
-  { id: "TA-2037", title: "Regression test suite",      assignee: { name: "Hana Sato",     initials: "HS" }, type: "QA",          priority: "Medium",   status: "Completed",   due: "Jun 18, 2026" },
-  { id: "TA-2036", title: "Customer churn dashboard",   assignee: { name: "Noah Bennett",  initials: "NB" }, type: "Analytics",   priority: "Low",      status: "Pending",     due: "Jul 10, 2026" },
-  { id: "TA-2035", title: "Mobile app accessibility",   assignee: { name: "Sara Iqbal",    initials: "SI" }, type: "Design",      priority: "High",     status: "In Progress", due: "Jul 05, 2026" },
-  { id: "TA-2034", title: "Billing API migration",      assignee: { name: "Tom Becker",    initials: "TB" }, type: "Development", priority: "Critical", status: "Cancelled",   due: "Jun 12, 2026" },
+  { id: "TA-2041", title: "Design system audit Q3",     type: "Design",      status: "Draft",     due: "Jun 28, 2026" },
+  { id: "TA-2040", title: "API rate-limit refactor",    type: "Development", status: "Draft",     due: "Jun 26, 2026" },
+  { id: "TA-2039", title: "Onboarding usability study", type: "Research",    status: "Completed", due: "Jun 20, 2026" },
+  { id: "TA-2038", title: "Q3 campaign launch plan",    type: "Marketing",   status: "Draft",     due: "Jul 02, 2026" },
+  { id: "TA-2037", title: "Regression test suite",      type: "QA",          status: "Completed", due: "Jun 18, 2026" },
+  { id: "TA-2036", title: "Customer churn dashboard",   type: "Analytics",   status: "Draft",     due: "Jul 10, 2026" },
+  { id: "TA-2035", title: "Mobile app accessibility",   type: "Design",      status: "Draft",     due: "Jul 05, 2026" },
+  { id: "TA-2034", title: "Billing API migration",      type: "Development", status: "Completed", due: "Jun 12, 2026" },
 ];
 
 function BottomRow() {
   return (
-    <div className="grid gap-4 xl:grid-cols-3">
-      <Card className="rounded-2xl border-border shadow-soft xl:col-span-2">
-        <RecentAssignments />
-      </Card>
-
-      <div className="space-y-4">
-        <Card className="rounded-2xl border-border shadow-soft">
-          <RecentActivity />
-        </Card>
-        <Card className="rounded-2xl border-border shadow-soft">
-          <NotificationsWidget />
-        </Card>
-      </div>
-    </div>
+    <Card className="rounded-2xl border-border shadow-soft">
+      <RecentAssignments />
+    </Card>
   );
 }
 
