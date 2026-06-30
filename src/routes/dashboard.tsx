@@ -13,13 +13,7 @@ import {
   Filter,
   ChevronLeft,
   ChevronRight,
-  MoreHorizontal,
-  Bell,
   CircleDot,
-  UserPlus,
-  FileCheck2,
-  AlertTriangle,
-  CalendarClock,
 } from "lucide-react";
 import {
   Bar,
@@ -41,7 +35,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Table,
   TableBody,
