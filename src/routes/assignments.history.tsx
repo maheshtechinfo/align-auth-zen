@@ -257,13 +257,12 @@ function AssignmentHistoryPage() {
                   <TableHead>Status</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead>Last Modified</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {paged.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={10} className="py-16 text-center text-sm text-muted-foreground">
+                    <TableCell colSpan={9} className="py-16 text-center text-sm text-muted-foreground">
                       <ClipboardList className="mx-auto mb-2 h-8 w-8 opacity-40" />
                       No assignments match your filters.
                     </TableCell>
@@ -292,35 +291,6 @@ function AssignmentHistoryPage() {
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">{formatDate(r.createdDate)}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">{formatDate(r.lastModified)}</TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="rounded-lg">
-                            Actions
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="rounded-xl">
-                          <DropdownMenuItem asChild>
-                            <Link to="/assignments/$id" params={{ id: r.id }}>
-                              <Eye className="mr-2 h-4 w-4" /> View
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => toast.info("Edit screen coming soon")}>
-                            <Pencil className="mr-2 h-4 w-4" /> Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleClone(r)}>
-                            <Copy className="mr-2 h-4 w-4" /> Clone
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className="text-destructive focus:text-destructive"
-                            onClick={() => setToDelete(r)}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" /> Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
