@@ -62,7 +62,7 @@ function statusVariant(s: AssignmentStatus) {
 }
 
 function AssignmentHistoryPage() {
-  const [rows, setRows] = useState<AssignmentRecord[]>(ASSIGNMENTS);
+  const [rows] = useState<AssignmentRecord[]>(ASSIGNMENTS);
   const [query, setQuery] = useState("");
   const [type, setType] = useState<string>("all");
   const [status, setStatus] = useState<string>("all");
@@ -72,7 +72,6 @@ function AssignmentHistoryPage() {
   const [sort, setSort] = useState<"newest" | "oldest">("newest");
   const [pageSize, setPageSize] = useState(10);
   const [page, setPage] = useState(1);
-  const [toDelete, setToDelete] = useState<AssignmentRecord | null>(null);
 
   const filtered = useMemo(() => {
     let list = rows.filter((r) => {
@@ -112,25 +111,6 @@ function AssignmentHistoryPage() {
     setPage(1);
   };
 
-  const handleClone = (r: AssignmentRecord) => {
-    const next: AssignmentRecord = {
-      ...r,
-      id: String(Math.max(...rows.map((x) => Number(x.id))) + 1).padStart(3, "0"),
-      name: `${r.name} (Copy)`,
-      status: "Draft",
-      createdDate: new Date().toISOString().slice(0, 10),
-      lastModified: new Date().toISOString().slice(0, 10),
-    };
-    setRows([next, ...rows]);
-    toast.success(`Cloned "${r.name}"`);
-  };
-
-  const handleDelete = () => {
-    if (!toDelete) return;
-    setRows(rows.filter((x) => x.id !== toDelete.id));
-    toast.success(`Deleted "${toDelete.name}"`);
-    setToDelete(null);
-  };
 
   const handleExport = () => {
     const header = ["ID", "Name", "Type", "Optimization", "Resources", "Tasks", "Status", "Created", "Modified"];
@@ -328,26 +308,6 @@ function AssignmentHistoryPage() {
         </CardContent>
       </Card>
 
-      <AlertDialog open={!!toDelete} onOpenChange={(o) => !o && setToDelete(null)}>
-        <AlertDialogContent className="rounded-2xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete assignment?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently remove <span className="font-semibold">{toDelete?.name}</span> and all its data.
-              This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-lg">Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={handleDelete}
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </DashboardShell>
   );
 }
