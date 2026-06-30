@@ -2,11 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import {
   BookOpen,
   HelpCircle,
-  FileSpreadsheet,
-  PlayCircle,
   Mail,
   Phone,
-  Download,
   ChevronRight,
   LifeBuoy,
 } from "lucide-react";
@@ -27,8 +24,6 @@ export const Route = createFileRoute("/help")({
 const helpCards = [
   { title: "Documentation", desc: "Read the complete user guide.", icon: BookOpen, gradient: "from-violet-500 to-fuchsia-500", cta: "Read User Guide" },
   { title: "FAQs", desc: "Frequently asked questions.", icon: HelpCircle, gradient: "from-indigo-500 to-purple-500", cta: "Browse FAQs" },
-  { title: "Sample Excel Template", desc: "Download the matrix template.", icon: FileSpreadsheet, gradient: "from-emerald-500 to-teal-500", cta: "Download Template" },
-  { title: "Video Tutorials", desc: "Learn how to use Task Align.", icon: PlayCircle, gradient: "from-sky-500 to-blue-500", cta: "Watch Videos" },
 ];
 
 const quickHelp = [
@@ -41,27 +36,14 @@ const quickHelp = [
 function HelpPage() {
   return (
     <DashboardShell>
-      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Help & Guide</h1>
-          <p className="text-sm text-muted-foreground">
-            Everything you need to get the most out of Task Align.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" className="rounded-xl">
-            <Download className="h-4 w-4" /> User Manual
-          </Button>
-          <Button variant="outline" className="rounded-xl">
-            <FileSpreadsheet className="h-4 w-4" /> Excel Template
-          </Button>
-          <Button className="rounded-xl">
-            <LifeBuoy className="h-4 w-4" /> Contact Support
-          </Button>
-        </div>
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">Help & Guide</h1>
+        <p className="text-sm text-muted-foreground">
+          Everything you need to get the most out of Task Align.
+        </p>
       </div>
 
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-5 sm:grid-cols-2">
         {helpCards.map((c) => (
           <Card key={c.title} className="group overflow-hidden rounded-2xl border-0 shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-elevated">
             <div className={`h-1 w-full bg-gradient-to-r ${c.gradient}`} />
