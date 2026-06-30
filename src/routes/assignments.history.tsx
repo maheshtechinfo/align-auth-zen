@@ -5,10 +5,6 @@ import {
   Filter,
   Download,
   X,
-  Eye,
-  Pencil,
-  Copy,
-  Trash2,
   ChevronLeft,
   ChevronRight,
   Plus,
@@ -36,23 +32,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import {
   ASSIGNMENTS,
   formatDate,
@@ -83,7 +62,7 @@ function statusVariant(s: AssignmentStatus) {
 }
 
 function AssignmentHistoryPage() {
-  const [rows, setRows] = useState<AssignmentRecord[]>(ASSIGNMENTS);
+  const [rows] = useState<AssignmentRecord[]>(ASSIGNMENTS);
   const [query, setQuery] = useState("");
   const [type, setType] = useState<string>("all");
   const [status, setStatus] = useState<string>("all");
@@ -93,7 +72,6 @@ function AssignmentHistoryPage() {
   const [sort, setSort] = useState<"newest" | "oldest">("newest");
   const [pageSize, setPageSize] = useState(10);
   const [page, setPage] = useState(1);
-  const [toDelete, setToDelete] = useState<AssignmentRecord | null>(null);
 
   const filtered = useMemo(() => {
     let list = rows.filter((r) => {
@@ -133,25 +111,6 @@ function AssignmentHistoryPage() {
     setPage(1);
   };
 
-  const handleClone = (r: AssignmentRecord) => {
-    const next: AssignmentRecord = {
-      ...r,
-      id: String(Math.max(...rows.map((x) => Number(x.id))) + 1).padStart(3, "0"),
-      name: `${r.name} (Copy)`,
-      status: "Draft",
-      createdDate: new Date().toISOString().slice(0, 10),
-      lastModified: new Date().toISOString().slice(0, 10),
-    };
-    setRows([next, ...rows]);
-    toast.success(`Cloned "${r.name}"`);
-  };
-
-  const handleDelete = () => {
-    if (!toDelete) return;
-    setRows(rows.filter((x) => x.id !== toDelete.id));
-    toast.success(`Deleted "${toDelete.name}"`);
-    setToDelete(null);
-  };
 
   const handleExport = () => {
     const header = ["ID", "Name", "Type", "Optimization", "Resources", "Tasks", "Status", "Created", "Modified"];
@@ -257,13 +216,12 @@ function AssignmentHistoryPage() {
                   <TableHead>Status</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead>Last Modified</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {paged.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={10} className="py-16 text-center text-sm text-muted-foreground">
+                    <TableCell colSpan={9} className="py-16 text-center text-sm text-muted-foreground">
                       <ClipboardList className="mx-auto mb-2 h-8 w-8 opacity-40" />
                       No assignments match your filters.
                     </TableCell>
@@ -292,35 +250,6 @@ function AssignmentHistoryPage() {
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">{formatDate(r.createdDate)}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">{formatDate(r.lastModified)}</TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="rounded-lg">
-                            Actions
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="rounded-xl">
-                          <DropdownMenuItem asChild>
-                            <Link to="/assignments/$id" params={{ id: r.id }}>
-                              <Eye className="mr-2 h-4 w-4" /> View
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => toast.info("Edit screen coming soon")}>
-                            <Pencil className="mr-2 h-4 w-4" /> Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleClone(r)}>
-                            <Copy className="mr-2 h-4 w-4" /> Clone
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className="text-destructive focus:text-destructive"
-                            onClick={() => setToDelete(r)}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" /> Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -379,26 +308,6 @@ function AssignmentHistoryPage() {
         </CardContent>
       </Card>
 
-      <AlertDialog open={!!toDelete} onOpenChange={(o) => !o && setToDelete(null)}>
-        <AlertDialogContent className="rounded-2xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete assignment?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently remove <span className="font-semibold">{toDelete?.name}</span> and all its data.
-              This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-lg">Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={handleDelete}
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </DashboardShell>
   );
 }

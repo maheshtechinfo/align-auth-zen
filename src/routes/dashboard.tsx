@@ -13,13 +13,7 @@ import {
   Filter,
   ChevronLeft,
   ChevronRight,
-  MoreHorizontal,
-  Bell,
   CircleDot,
-  UserPlus,
-  FileCheck2,
-  AlertTriangle,
-  CalendarClock,
 } from "lucide-react";
 import {
   Bar,
@@ -41,7 +35,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Table,
   TableBody,
@@ -165,9 +158,7 @@ const barData = [
 
 const pieData = [
   { name: "Completed", value: 924, color: "oklch(0.65 0.16 155)" },
-  { name: "In Progress", value: 148, color: "oklch(0.55 0.24 285)" },
-  { name: "Pending", value: 212, color: "oklch(0.78 0.15 80)" },
-  { name: "Cancelled", value: 42, color: "oklch(0.6 0.22 25)" },
+  { name: "Draft", value: 148, color: "oklch(0.55 0.24 285)" },
 ];
 
 function ChartsRow() {
@@ -272,40 +263,27 @@ function ChartsRow() {
 type AssignmentRow = {
   id: string;
   title: string;
-  assignee: { name: string; initials: string };
   type: string;
-  priority: "Low" | "Medium" | "High" | "Critical";
-  status: "Completed" | "In Progress" | "Pending" | "Cancelled";
+  status: "Completed" | "Draft";
   due: string;
 };
 
 const allAssignments: AssignmentRow[] = [
-  { id: "TA-2041", title: "Design system audit Q3",     assignee: { name: "Alex Rivera",   initials: "AR" }, type: "Design",      priority: "High",     status: "In Progress", due: "Jun 28, 2026" },
-  { id: "TA-2040", title: "API rate-limit refactor",    assignee: { name: "Priya Shah",    initials: "PS" }, type: "Development", priority: "Critical", status: "Pending",     due: "Jun 26, 2026" },
-  { id: "TA-2039", title: "Onboarding usability study", assignee: { name: "Mei Lin",       initials: "ML" }, type: "Research",    priority: "Medium",   status: "Completed",   due: "Jun 20, 2026" },
-  { id: "TA-2038", title: "Q3 campaign launch plan",    assignee: { name: "Diego Alvarez", initials: "DA" }, type: "Marketing",   priority: "High",     status: "In Progress", due: "Jul 02, 2026" },
-  { id: "TA-2037", title: "Regression test suite",      assignee: { name: "Hana Sato",     initials: "HS" }, type: "QA",          priority: "Medium",   status: "Completed",   due: "Jun 18, 2026" },
-  { id: "TA-2036", title: "Customer churn dashboard",   assignee: { name: "Noah Bennett",  initials: "NB" }, type: "Analytics",   priority: "Low",      status: "Pending",     due: "Jul 10, 2026" },
-  { id: "TA-2035", title: "Mobile app accessibility",   assignee: { name: "Sara Iqbal",    initials: "SI" }, type: "Design",      priority: "High",     status: "In Progress", due: "Jul 05, 2026" },
-  { id: "TA-2034", title: "Billing API migration",      assignee: { name: "Tom Becker",    initials: "TB" }, type: "Development", priority: "Critical", status: "Cancelled",   due: "Jun 12, 2026" },
+  { id: "TA-2041", title: "Design system audit Q3",     type: "Design",      status: "Draft",     due: "Jun 28, 2026" },
+  { id: "TA-2040", title: "API rate-limit refactor",    type: "Development", status: "Draft",     due: "Jun 26, 2026" },
+  { id: "TA-2039", title: "Onboarding usability study", type: "Research",    status: "Completed", due: "Jun 20, 2026" },
+  { id: "TA-2038", title: "Q3 campaign launch plan",    type: "Marketing",   status: "Draft",     due: "Jul 02, 2026" },
+  { id: "TA-2037", title: "Regression test suite",      type: "QA",          status: "Completed", due: "Jun 18, 2026" },
+  { id: "TA-2036", title: "Customer churn dashboard",   type: "Analytics",   status: "Draft",     due: "Jul 10, 2026" },
+  { id: "TA-2035", title: "Mobile app accessibility",   type: "Design",      status: "Draft",     due: "Jul 05, 2026" },
+  { id: "TA-2034", title: "Billing API migration",      type: "Development", status: "Completed", due: "Jun 12, 2026" },
 ];
 
 function BottomRow() {
   return (
-    <div className="grid gap-4 xl:grid-cols-3">
-      <Card className="rounded-2xl border-border shadow-soft xl:col-span-2">
-        <RecentAssignments />
-      </Card>
-
-      <div className="space-y-4">
-        <Card className="rounded-2xl border-border shadow-soft">
-          <RecentActivity />
-        </Card>
-        <Card className="rounded-2xl border-border shadow-soft">
-          <NotificationsWidget />
-        </Card>
-      </div>
-    </div>
+    <Card className="rounded-2xl border-border shadow-soft">
+      <RecentAssignments />
+    </Card>
   );
 }
 
@@ -320,8 +298,7 @@ function RecentAssignments() {
       const matchesQ =
         !query ||
         a.title.toLowerCase().includes(query.toLowerCase()) ||
-        a.id.toLowerCase().includes(query.toLowerCase()) ||
-        a.assignee.name.toLowerCase().includes(query.toLowerCase());
+        a.id.toLowerCase().includes(query.toLowerCase());
       const matchesS = status === "all" || a.status.toLowerCase() === status;
       return matchesQ && matchesS;
     });
@@ -349,7 +326,7 @@ function RecentAssignments() {
                 setQuery(e.target.value);
                 setPage(1);
               }}
-              placeholder="Search by title, ID or assignee…"
+              placeholder="Search by title or ID…"
               className="h-10 rounded-xl pl-9"
             />
           </div>
@@ -366,10 +343,8 @@ function RecentAssignments() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All statuses</SelectItem>
-              <SelectItem value="in progress">In Progress</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="draft">Draft</SelectItem>
               <SelectItem value="completed">Completed</SelectItem>
-              <SelectItem value="cancelled">Cancelled</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -381,18 +356,15 @@ function RecentAssignments() {
               <TableRow className="border-border hover:bg-transparent">
                 <TableHead className="pl-6">ID</TableHead>
                 <TableHead>Assignment</TableHead>
-                <TableHead>Assignee</TableHead>
                 <TableHead>Type</TableHead>
-                <TableHead>Priority</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Due</TableHead>
-                <TableHead className="pr-6 text-right">Actions</TableHead>
+                <TableHead className="pr-6">Due</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {current.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="py-12 text-center text-sm text-muted-foreground">
+                  <TableCell colSpan={5} className="py-12 text-center text-sm text-muted-foreground">
                     No assignments match your filters.
                   </TableCell>
                 </TableRow>
@@ -401,25 +373,9 @@ function RecentAssignments() {
                 <TableRow key={a.id} className="border-border">
                   <TableCell className="pl-6 font-mono text-xs text-muted-foreground">{a.id}</TableCell>
                   <TableCell className="font-medium">{a.title}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Avatar className="h-7 w-7">
-                        <AvatarFallback className="bg-primary/10 text-[10px] font-semibold text-primary">
-                          {a.assignee.initials}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="text-sm">{a.assignee.name}</span>
-                    </div>
-                  </TableCell>
                   <TableCell className="text-sm text-muted-foreground">{a.type}</TableCell>
-                  <TableCell><PriorityPill p={a.priority} /></TableCell>
                   <TableCell><StatusPill s={a.status} /></TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{a.due}</TableCell>
-                  <TableCell className="pr-6 text-right">
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
+                  <TableCell className="pr-6 text-sm text-muted-foreground">{a.due}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -468,26 +424,10 @@ function RecentAssignments() {
   );
 }
 
-function PriorityPill({ p }: { p: AssignmentRow["priority"] }) {
-  const styles: Record<AssignmentRow["priority"], string> = {
-    Low: "bg-muted text-muted-foreground",
-    Medium: "bg-blue-500/10 text-blue-600",
-    High: "bg-amber-500/10 text-amber-600",
-    Critical: "bg-destructive/10 text-destructive",
-  };
-  return (
-    <Badge variant="secondary" className={`rounded-full border-0 px-2.5 py-0.5 text-xs font-medium ${styles[p]}`}>
-      {p}
-    </Badge>
-  );
-}
-
 function StatusPill({ s }: { s: AssignmentRow["status"] }) {
   const styles: Record<AssignmentRow["status"], string> = {
     Completed: "bg-success/10 text-success",
-    "In Progress": "bg-primary/10 text-primary",
-    Pending: "bg-amber-500/10 text-amber-600",
-    Cancelled: "bg-muted text-muted-foreground line-through",
+    Draft: "bg-muted text-muted-foreground",
   };
   return (
     <Badge variant="secondary" className={`gap-1.5 rounded-full border-0 px-2.5 py-0.5 text-xs font-medium ${styles[s]}`}>
@@ -496,83 +436,3 @@ function StatusPill({ s }: { s: AssignmentRow["status"] }) {
   );
 }
 
-const activities = [
-  { icon: FileCheck2, tint: "bg-success/10 text-success", title: "Mei Lin completed", target: "Onboarding usability study", time: "12m ago" },
-  { icon: UserPlus, tint: "bg-primary/10 text-primary", title: "Alex Rivera was assigned to", target: "Design system audit Q3", time: "1h ago" },
-  { icon: AlertTriangle, tint: "bg-destructive/10 text-destructive", title: "Critical priority set on", target: "API rate-limit refactor", time: "3h ago" },
-  { icon: CalendarClock, tint: "bg-amber-500/10 text-amber-600", title: "Due date updated for", target: "Q3 campaign launch plan", time: "Yesterday" },
-  { icon: FileCheck2, tint: "bg-success/10 text-success", title: "Hana Sato closed", target: "Regression test suite", time: "Yesterday" },
-];
-
-function RecentActivity() {
-  return (
-    <>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0">
-        <div>
-          <CardTitle className="text-base">Recent activity</CardTitle>
-          <CardDescription>Latest events across the workspace</CardDescription>
-        </div>
-        <Button variant="ghost" size="sm" className="text-primary hover:text-primary">View log</Button>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {activities.map((a, i) => (
-          <div key={i} className="flex items-start gap-3">
-            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${a.tint}`}>
-              <a.icon className="h-4 w-4" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm leading-tight">
-                <span className="text-muted-foreground">{a.title} </span>
-                <span className="font-medium">{a.target}</span>
-              </p>
-              <p className="mt-0.5 text-xs text-muted-foreground">{a.time}</p>
-            </div>
-          </div>
-        ))}
-      </CardContent>
-    </>
-  );
-}
-
-const notifications = [
-  { title: "New report ready", body: "Weekly resource utilization is available.", time: "Just now", unread: true },
-  { title: "Approval requested", body: "Diego needs approval on Q3 campaign plan.", time: "30m ago", unread: true },
-  { title: "Deadline tomorrow", body: "API rate-limit refactor is due in 24 hours.", time: "2h ago", unread: true },
-  { title: "New team member", body: "Sara Iqbal joined the Design team.", time: "Yesterday", unread: false },
-];
-
-function NotificationsWidget() {
-  return (
-    <>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0">
-        <div className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <Bell className="h-4 w-4" />
-          </div>
-          <div>
-            <CardTitle className="text-base">Notifications</CardTitle>
-            <CardDescription>You have 3 unread</CardDescription>
-          </div>
-        </div>
-        <Button variant="ghost" size="sm" className="text-primary hover:text-primary">Mark all</Button>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        {notifications.map((n, i) => (
-          <div
-            key={i}
-            className={`flex gap-3 rounded-xl border border-transparent p-3 transition-colors hover:border-border hover:bg-muted/40 ${n.unread ? "bg-primary-soft/40" : ""}`}
-          >
-            <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${n.unread ? "bg-primary" : "bg-muted-foreground/30"}`} />
-            <div className="min-w-0 flex-1">
-              <div className="flex items-baseline justify-between gap-2">
-                <p className="truncate text-sm font-medium">{n.title}</p>
-                <span className="shrink-0 text-[11px] text-muted-foreground">{n.time}</span>
-              </div>
-              <p className="mt-0.5 text-xs text-muted-foreground">{n.body}</p>
-            </div>
-          </div>
-        ))}
-      </CardContent>
-    </>
-  );
-}

@@ -5,8 +5,6 @@ import {
   Download,
   FileText,
   FileSpreadsheet,
-  Eye,
-  Trash2,
   Plus,
   FileBarChart,
   Files,
@@ -265,23 +263,11 @@ function ReportHistoryPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
-                        <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg" title="View" onClick={() => toast.info(`Opening ${r.id}`)}>
-                          <Eye className="h-4 w-4" />
+                        <Button size="sm" variant="ghost" className="h-8 rounded-lg" title="Download PDF" onClick={() => toast.success(`Downloaded ${r.id}.pdf`)}>
+                          <FileText className="h-4 w-4" /> PDF
                         </Button>
-                        <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg" title="Download PDF" onClick={() => toast.success(`Downloaded ${r.id}.pdf`)}>
-                          <FileText className="h-4 w-4" />
-                        </Button>
-                        <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg" title="Download Excel" onClick={() => toast.success(`Downloaded ${r.id}.xlsx`)}>
-                          <FileSpreadsheet className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-8 w-8 rounded-lg text-destructive hover:text-destructive"
-                          title="Delete"
-                          onClick={() => setToDelete(r)}
-                        >
-                          <Trash2 className="h-4 w-4" />
+                        <Button size="sm" variant="ghost" className="h-8 rounded-lg" title="Download Excel" onClick={() => toast.success(`Downloaded ${r.id}.xlsx`)}>
+                          <FileSpreadsheet className="h-4 w-4" /> Excel
                         </Button>
                       </div>
                     </TableCell>
