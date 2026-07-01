@@ -9,7 +9,6 @@ import {
   BarChart3,
   FileBarChart,
   Activity,
-  Activity,
   Settings,
   HelpCircle,
   Sparkles,
