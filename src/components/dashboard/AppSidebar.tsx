@@ -136,6 +136,14 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               <CollapsibleGroup group={reportsGroup} pathname={pathname} isActive={isActive} />
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={isActive(activityItem.url)} tooltip={activityItem.title}>
+                  <Link to={activityItem.url}>
+                    <activityItem.icon className="h-4 w-4" />
+                    <span>{activityItem.title}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
