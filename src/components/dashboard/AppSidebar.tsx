@@ -8,7 +8,7 @@ import {
   LayoutTemplate,
   BarChart3,
   FileBarChart,
-  Bell,
+  Activity,
   Activity,
   Settings,
   HelpCircle,
