@@ -84,10 +84,10 @@ const reportsGroup: GroupItem = {
   icon: BarChart3,
   children: [
     { title: "Report History", url: "/reports/history", icon: FileBarChart },
-    { title: "Notifications", url: "/notifications", icon: Bell, badge: 4 },
-    { title: "Activity Log", url: "/activity", icon: Activity },
   ],
 };
+
+const activityItem: LeafItem = { title: "Activity Log", url: "/activity", icon: Activity };
 
 const systemItems: LeafItem[] = [
   { title: "Settings", url: "/settings", icon: Settings },
