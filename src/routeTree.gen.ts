@@ -20,6 +20,7 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ActivityRouteImport } from './routes/activity'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ProfileIndexRouteImport } from './routes/profile.index'
 import { Route as ReportsHistoryRouteImport } from './routes/reports.history'
 import { Route as ProfileEditRouteImport } from './routes/profile.edit'
 import { Route as ProfileChangePasswordRouteImport } from './routes/profile.change-password'
@@ -82,6 +83,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfileIndexRoute = ProfileIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ProfileRoute,
+} as any)
 const ReportsHistoryRoute = ReportsHistoryRouteImport.update({
   id: '/reports/history',
   path: '/reports/history',
@@ -131,6 +137,7 @@ export interface FileRoutesByFullPath {
   '/profile/change-password': typeof ProfileChangePasswordRoute
   '/profile/edit': typeof ProfileEditRoute
   '/reports/history': typeof ReportsHistoryRoute
+  '/profile/': typeof ProfileIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -140,7 +147,6 @@ export interface FileRoutesByTo {
   '/help': typeof HelpRoute
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
-  '/profile': typeof ProfileRouteWithChildren
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
   '/templates': typeof TemplatesRoute
@@ -150,6 +156,7 @@ export interface FileRoutesByTo {
   '/profile/change-password': typeof ProfileChangePasswordRoute
   '/profile/edit': typeof ProfileEditRoute
   '/reports/history': typeof ReportsHistoryRoute
+  '/profile': typeof ProfileIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -170,6 +177,7 @@ export interface FileRoutesById {
   '/profile/change-password': typeof ProfileChangePasswordRoute
   '/profile/edit': typeof ProfileEditRoute
   '/reports/history': typeof ReportsHistoryRoute
+  '/profile/': typeof ProfileIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -191,6 +199,7 @@ export interface FileRouteTypes {
     | '/profile/change-password'
     | '/profile/edit'
     | '/reports/history'
+    | '/profile/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -200,7 +209,6 @@ export interface FileRouteTypes {
     | '/help'
     | '/login'
     | '/notifications'
-    | '/profile'
     | '/register'
     | '/settings'
     | '/templates'
@@ -210,6 +218,7 @@ export interface FileRouteTypes {
     | '/profile/change-password'
     | '/profile/edit'
     | '/reports/history'
+    | '/profile'
   id:
     | '__root__'
     | '/'
@@ -229,6 +238,7 @@ export interface FileRouteTypes {
     | '/profile/change-password'
     | '/profile/edit'
     | '/reports/history'
+    | '/profile/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -328,6 +338,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profile/': {
+      id: '/profile/'
+      path: '/'
+      fullPath: '/profile/'
+      preLoaderRoute: typeof ProfileIndexRouteImport
+      parentRoute: typeof ProfileRoute
+    }
     '/reports/history': {
       id: '/reports/history'
       path: '/reports/history'
@@ -376,11 +393,13 @@ declare module '@tanstack/react-router' {
 interface ProfileRouteChildren {
   ProfileChangePasswordRoute: typeof ProfileChangePasswordRoute
   ProfileEditRoute: typeof ProfileEditRoute
+  ProfileIndexRoute: typeof ProfileIndexRoute
 }
 
 const ProfileRouteChildren: ProfileRouteChildren = {
   ProfileChangePasswordRoute: ProfileChangePasswordRoute,
   ProfileEditRoute: ProfileEditRoute,
+  ProfileIndexRoute: ProfileIndexRoute,
 }
 
 const ProfileRouteWithChildren =
@@ -406,13 +425,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
